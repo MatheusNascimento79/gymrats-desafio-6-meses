@@ -103,13 +103,6 @@ export default function DashboardPage() {
         <StatCard label="Adesao media" value={`${insights.averageAdherence}%`} helper="Media semanal do grupo" icon={Users} />
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Zero alcool" value={`${alcoholStats.adherence}%`} helper="Participantes que declararam estar zero" icon={Flame} tone="gold" />
-        <StatCard label="Estou zero" value={alcoholStats.ok} helper="Status ok na semana" icon={Target} tone="green" />
-        <StatCard label="Vishh Bebi" value={alcoholStats.broke} helper="Quebraram o combinado" icon={AlertTriangle} tone={alcoholStats.broke ? "red" : "green"} />
-        <StatCard label="Sem resposta" value={alcoholStats.unknown} helper="Ainda nao informaram" icon={Users} />
-      </section>
-
       <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
         <div className="panel p-4 md:p-5">
           <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Status semanal por atleta</h2>
