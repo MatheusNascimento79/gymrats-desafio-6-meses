@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createMockActivities } from "@/data/mock";
-import { loadActivities, saveActivities } from "@/lib/storage";
+import { hasSavedActivities, loadActivities, saveActivities } from "@/lib/storage";
 import type { ActivityRecord } from "@/lib/types";
 
 export function useChallengeData() {
@@ -12,9 +12,10 @@ export function useChallengeData() {
 
   useEffect(() => {
     try {
+      const hasSavedData = hasSavedActivities();
       const stored = loadActivities();
-      setActivitiesState(stored.length ? stored : createMockActivities());
-      setUsingMock(stored.length === 0);
+      setActivitiesState(hasSavedData ? stored : createMockActivities());
+      setUsingMock(!hasSavedData);
     } finally {
       setLoaded(true);
     }

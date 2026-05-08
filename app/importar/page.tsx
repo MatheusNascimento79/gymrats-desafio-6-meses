@@ -5,7 +5,6 @@ import { CheckCircle2, FileSpreadsheet, LockKeyhole, Trash2, UploadCloud, XCircl
 import { parseActivityFile } from "@/lib/importer";
 import { useChallengeData } from "@/components/useChallengeData";
 import { dedupeActivities, mergeActivities } from "@/lib/dedupe";
-import { clearActivities } from "@/lib/storage";
 import type { ActivityRecord } from "@/lib/types";
 
 type ImportMode = "replace" | "merge";
@@ -58,7 +57,6 @@ export default function ImportPage() {
   }
 
   function clearImportedData() {
-    clearActivities();
     setActivities([]);
     setRecords([]);
     setHeaders([]);
