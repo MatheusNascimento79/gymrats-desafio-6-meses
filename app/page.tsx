@@ -7,6 +7,7 @@ import {
   buildActivityTypeDistribution,
   buildOverallRanking,
   buildWeekSummaries,
+  getBestAlcoholWeek,
   getInsights,
   getParticipants,
   summarizeWeek,
@@ -35,13 +36,14 @@ export default function DashboardPage() {
   const activityTypes = buildActivityTypeDistribution(activities);
   const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const alcoholStats = buildAlcoholStats(alcoholRecords, participants, currentWeekKey);
+  const bestAlcoholWeek = getBestAlcoholWeek(alcoholRecords, participants);
 
   useEffect(() => {
     let active = true;
 
     async function loadAlcohol() {
       try {
-        const response = await fetch(`/api/alcohol?weekKey=${currentWeekKey}`, { cache: "no-store" });
+        const response = await fetch("/api/alcohol", { cache: "no-store" });
         if (!response.ok) {
           return;
         }
@@ -135,8 +137,10 @@ export default function DashboardPage() {
           <div className="mt-4 space-y-3 text-sm text-zinc-300">
             <Insight icon={Trophy} label="Melhor semana" value={insights.bestWeek ? `${insights.bestWeek.label}: ${insights.bestWeek.totalActivities} atividades` : "Sem dados"} />
             <Insight icon={Medal} label="Mais consistente" value={insights.mostConsistent ? `${insights.mostConsistent.participant}, ${insights.mostConsistent.completedWeeks} semanas completas` : "Sem dados"} />
+            <Insight icon={Activity} label="Mais atividades em 1 dia" value={insights.bestSingleDay ? `${insights.bestSingleDay.participant}, ${insights.bestSingleDay.count} atividades em ${insights.bestSingleDay.date}` : "Sem dados"} />
             <Insight icon={Activity} label="Sequencia diaria" value={insights.dailyStreak ? `${insights.dailyStreak.participant}, ${insights.dailyStreak.streak} dias direto` : "Sem dados"} />
-            <Insight icon={Flame} label="Em risco" value={insights.atRisk.length ? insights.atRisk.map((item) => item.participant).join(", ") : "Ninguem em risco agora"} />
+            <Insight icon={Flame} label="Meta Semanal em Risco" value={insights.atRisk.length ? insights.atRisk.map((item) => item.participant).join(", ") : "Ninguem em risco agora"} />
+            <Insight icon={Flame} label="Semana mais zero alcool" value={bestAlcoholWeek ? `${bestAlcoholWeek.label}: ${bestAlcoholWeek.ok} atletas (${bestAlcoholWeek.adherence}%)` : "Sem dados"} />
           </div>
         </div>
       </section>

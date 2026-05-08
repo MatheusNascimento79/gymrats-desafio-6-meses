@@ -215,8 +215,48 @@ export function getInsights(records: ActivityRecord[], participants = getPartici
     bestWeek,
     mostConsistent,
     dailyStreak,
+    bestSingleDay: getBestSingleDay(records),
     atRisk,
     averageAdherence
+  };
+}
+
+export function getBestSingleDay(records: ActivityRecord[]) {
+  const map = new Map<string, { participant: string; date: string; count: number }>();
+
+  records.forEach((record) => {
+    const key = `${record.participant}|${record.date}`;
+    const current = map.get(key);
+    map.set(key, {
+      participant: record.participant,
+      date: record.date,
+      count: (current?.count ?? 0) + 1
+    });
+  });
+
+  return Array.from(map.values()).sort((a, b) => b.count - a.count || a.date.localeCompare(b.date))[0];
+}
+
+export function getBestAlcoholWeek(records: AlcoholRecord[], participants: Participant[]) {
+  const map = new Map<string, number>();
+
+  records.forEach((record) => {
+    if (record.status === "ok") {
+      map.set(record.weekKey, (map.get(record.weekKey) ?? 0) + 1);
+    }
+  });
+
+  const best = Array.from(map.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+
+  if (!best) {
+    return undefined;
+  }
+
+  return {
+    weekKey: best[0],
+    label: weekLabel(best[0]),
+    ok: best[1],
+    adherence: participants.length ? Math.round((best[1] / participants.length) * 100) : 0
   };
 }
 
