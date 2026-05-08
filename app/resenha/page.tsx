@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, SendHorizonal, SmilePlus } from "lucide-react";
+import { MessageCircle, SendHorizonal, SmilePlus, X } from "lucide-react";
 import { weekLabel } from "@/lib/challenge";
 import { markChatMessagesRead } from "@/lib/chat-read";
 import { useAuth } from "@/components/AuthGate";
@@ -14,12 +14,15 @@ export default function WeeklyChatPage() {
   const [message, setMessage] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const currentWeekLabel = useMemo(() => (weekKey ? weekLabel(weekKey) : ""), [weekKey]);
 
-  async function loadMessages() {
-    setError("");
+  async function loadMessages(options?: { silent?: boolean }) {
+    if (!options?.silent) {
+      setError("");
+    }
 
     try {
       const response = await fetch("/api/chat", { cache: "no-store" });
@@ -36,7 +39,9 @@ export default function WeeklyChatPage() {
         setError("Configure o Supabase para liberar a resenha compartilhada entre aparelhos.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Nao foi possivel carregar a resenha.");
+      if (!options?.silent) {
+        setError(err instanceof Error ? err.message : "Nao foi possivel carregar a resenha.");
+      }
     } finally {
       setLoaded(true);
     }
@@ -44,6 +49,12 @@ export default function WeeklyChatPage() {
 
   useEffect(() => {
     loadMessages();
+
+    const interval = window.setInterval(() => {
+      loadMessages({ silent: true });
+    }, 5000);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -89,6 +100,37 @@ export default function WeeklyChatPage() {
       setError(err instanceof Error ? err.message : "Nao foi possivel enviar a mensagem.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function deleteMessage(id: string) {
+    if (!window.confirm("Deletar esta mensagem da resenha?")) {
+      return;
+    }
+
+    const previousMessages = messages;
+    setDeletingId(id);
+    setError("");
+    setMessages((current) => current.filter((item) => item.id !== id));
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id })
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Nao foi possivel deletar a mensagem.");
+      }
+    } catch (err) {
+      setMessages(previousMessages);
+      setError(err instanceof Error ? err.message : "Nao foi possivel deletar a mensagem.");
+    } finally {
+      setDeletingId("");
     }
   }
 
@@ -139,9 +181,23 @@ export default function WeeklyChatPage() {
             return (
               <div key={item.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 <article className={`max-w-[88%] rounded-lg border p-3 sm:max-w-[72%] ${isMine ? "border-gold/30 bg-gold/10" : "border-white/10 bg-white/[0.04]"}`}>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                    <span className={isMine ? "font-bold text-gold" : "font-bold text-white"}>{item.participant}</span>
-                    <span className="text-zinc-500">{formatMessageTime(item.createdAt)}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className={isMine ? "font-bold text-gold" : "font-bold text-white"}>{item.participant}</span>
+                      <span className="text-zinc-500">{formatMessageTime(item.createdAt)}</span>
+                    </div>
+                    {user?.isSuperAdmin ? (
+                      <button
+                        type="button"
+                        disabled={deletingId === item.id}
+                        onClick={() => deleteMessage(item.id)}
+                        className="rounded-full border border-danger/30 bg-danger/10 p-1 text-danger transition hover:bg-danger/20 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Deletar mensagem"
+                        title="Deletar mensagem"
+                      >
+                        <X size={12} />
+                      </button>
+                    ) : null}
                   </div>
                   <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-100">{item.message}</p>
                 </article>

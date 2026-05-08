@@ -90,3 +90,34 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ message: chatMessageRowToRecord(data) });
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ error: "Supabase nao configurado." }, { status: 503 });
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Login obrigatorio." }, { status: 401 });
+  }
+
+  if (!user.isSuperAdmin) {
+    return NextResponse.json({ error: "Apenas o Super Admin pode deletar mensagens." }, { status: 403 });
+  }
+
+  const body = (await request.json()) as { id?: string };
+
+  if (!body.id) {
+    return NextResponse.json({ error: "Mensagem nao informada." }, { status: 400 });
+  }
+
+  const supabase = getSupabaseAdmin()!;
+  const { error } = await supabase.from("weekly_chat_messages").delete().eq("id", body.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
