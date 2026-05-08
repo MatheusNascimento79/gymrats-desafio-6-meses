@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, UserRound } from "lucide-react";
+import { Search, UserRound, X } from "lucide-react";
 import { buildOverallRanking, getParticipants, summarizeWeek, weekKeyFromDate } from "@/lib/challenge";
 import { useChallengeData } from "@/components/useChallengeData";
 import { StatusBadge } from "@/components/StatusBadge";
+import type { ActivityRecord } from "@/lib/types";
 
 export default function ParticipantsPage() {
   const { activities, participants: importedParticipants } = useChallengeData();
   const [query, setQuery] = useState("");
+  const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeek = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const ranking = buildOverallRanking(activities, participants);
@@ -41,7 +43,12 @@ export default function ParticipantsPage() {
           const weeklyActivities = week?.activities ?? 0;
 
           return (
-            <article key={participant.name} className="panel p-4">
+            <button
+              key={participant.name}
+              type="button"
+              onClick={() => setSelectedParticipant(participant.name)}
+              className="panel p-4 text-left transition hover:border-gold/40 hover:bg-steel/80"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-gold text-black">
@@ -49,7 +56,7 @@ export default function ParticipantsPage() {
                   </span>
                   <div>
                     <h2 className="font-bold text-white">{participant.name}</h2>
-                    <p className="text-sm text-zinc-400">{participant.team ?? "Sem time"}</p>
+                    {participant.team ? <p className="text-sm text-zinc-400">{participant.team}</p> : null}
                   </div>
                 </div>
                 {week ? <StatusBadge status={week.status} /> : null}
@@ -65,10 +72,57 @@ export default function ParticipantsPage() {
                 <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Meta da semana</p>
                 <WeeklyGoalDots activities={weeklyActivities} />
               </div>
-            </article>
+            </button>
           );
         })}
       </section>
+
+      {selectedParticipant ? (
+        <ActivityModal
+          participant={selectedParticipant}
+          activities={activities.filter((activity) => activity.participant === selectedParticipant)}
+          onClose={() => setSelectedParticipant(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ActivityModal({ participant, activities, onClose }: { participant: string; activities: ActivityRecord[]; onClose: () => void }) {
+  const sorted = [...activities].sort((a, b) => b.date.localeCompare(a.date));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="panel max-h-[85vh] w-full max-w-2xl overflow-hidden">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-4 md:p-5">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-gold">Atividades</p>
+            <h2 className="mt-1 font-[var(--font-oswald)] text-3xl font-bold uppercase text-white">{participant}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-zinc-300 transition hover:text-white" aria-label="Fechar">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="max-h-[65vh] overflow-y-auto p-4 md:p-5">
+          {sorted.length ? (
+            <div className="space-y-2">
+              {sorted.map((activity) => (
+                <div key={activity.id} className="grid gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:grid-cols-[110px_1fr_auto] sm:items-center">
+                  <span className="font-bold text-gold">{activity.date}</span>
+                  <span className="font-semibold text-white">{activity.activityType}</span>
+                  <span className="text-sm text-zinc-400">
+                    {activity.durationMinutes ? `${activity.durationMinutes} min` : ""}
+                    {activity.distance ? `${activity.durationMinutes ? " · " : ""}${activity.distance} mi` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg border border-white/10 bg-white/[0.03] p-4 text-zinc-400">Nenhuma atividade registrada para este participante.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
