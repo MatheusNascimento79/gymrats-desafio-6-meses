@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, Flame, Medal, Target, Trophy, Users } from "lucide-react";
 import {
+  buildAlcoholStats,
   buildActivityTypeDistribution,
   buildOverallRanking,
   buildWeekSummaries,
@@ -14,7 +16,8 @@ import {
 import { useChallengeData } from "@/components/useChallengeData";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ActivityTypeChart, ChartCard, CompletionChart, ParticipantBarChart, WeeklyEvolutionChart } from "@/components/Charts";
+import { ChartCard, CompletionChart, ParticipantBarChart, WeeklyEvolutionChart } from "@/components/Charts";
+import type { AlcoholRecord, AlcoholStatus } from "@/lib/types";
 
 export default function DashboardPage() {
   const { activities, participants: importedParticipants, loaded, usingMock } = useChallengeData();
@@ -30,6 +33,35 @@ export default function DashboardPage() {
   const weeks = buildWeekSummaries(activities, participants);
   const insights = getInsights(activities, participants);
   const activityTypes = buildActivityTypeDistribution(activities);
+  const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
+  const alcoholStats = buildAlcoholStats(alcoholRecords, participants, currentWeekKey);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAlcohol() {
+      try {
+        const response = await fetch(`/api/alcohol?weekKey=${currentWeekKey}`, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as { records: AlcoholRecord[] };
+        if (active) {
+          setAlcoholRecords(payload.records ?? []);
+        }
+      } catch {
+        if (active) {
+          setAlcoholRecords([]);
+        }
+      }
+    }
+
+    loadAlcohol();
+
+    return () => {
+      active = false;
+    };
+  }, [currentWeekKey]);
 
   if (!loaded) {
     return <div className="panel p-6 text-zinc-300">Carregando desafio...</div>;
@@ -69,6 +101,13 @@ export default function DashboardPage() {
         <StatCard label="Pendentes" value={pending} helper="Precisam treinar antes de domingo" icon={AlertTriangle} tone={pending ? "red" : "green"} />
         <StatCard label="Atividades totais" value={activities.length} helper="No desafio carregado" icon={Activity} tone="gold" />
         <StatCard label="Adesao media" value={`${insights.averageAdherence}%`} helper="Media semanal do grupo" icon={Users} />
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Zero alcool" value={`${alcoholStats.adherence}%`} helper="Participantes que declararam estar zero" icon={Flame} tone="gold" />
+        <StatCard label="Estou zero" value={alcoholStats.ok} helper="Status ok na semana" icon={Target} tone="green" />
+        <StatCard label="Vishh Bebi" value={alcoholStats.broke} helper="Quebraram o combinado" icon={AlertTriangle} tone={alcoholStats.broke ? "red" : "green"} />
+        <StatCard label="Sem resposta" value={alcoholStats.unknown} helper="Ainda nao informaram" icon={Users} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
@@ -116,6 +155,11 @@ export default function DashboardPage() {
         <Ranking title="Ranking da semana" rows={weekRanking} fields={["activities", "missing"]} />
       </section>
 
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <ActivityTypeTable data={activityTypes} total={activities.length} />
+        <ZeroAlcoholTable rows={alcoholStats.records} />
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-2">
         <ChartCard title="Evolucao semanal do grupo">
           <WeeklyEvolutionChart data={weeks} />
@@ -126,10 +170,69 @@ export default function DashboardPage() {
         <ChartCard title="Cumprimento da meta por semana">
           <CompletionChart data={weeks} />
         </ChartCard>
-        <ChartCard title="Distribuicao por tipo">
-          <ActivityTypeChart data={activityTypes} />
-        </ChartCard>
       </section>
+    </div>
+  );
+}
+
+function ActivityTypeTable({ data, total }: { data: Array<{ name: string; value: number }>; total: number }) {
+  return (
+    <div className="panel p-4 md:p-5">
+      <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Atividades por tipo</h2>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[420px] text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-zinc-500">
+            <tr>
+              <th className="py-3">Tipo</th>
+              <th>Qtd.</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {data.slice(0, 10).map((item) => (
+              <tr key={item.name}>
+                <td className="py-3 font-semibold text-white">{item.name}</td>
+                <td className="font-bold text-gold">{item.value}</td>
+                <td className="text-zinc-300">{total ? Math.round((item.value / total) * 100) : 0}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const alcoholLabels: Record<AlcoholStatus, string> = {
+  ok: "Estou zero",
+  broke: "Vishh Bebi",
+  unknown: "Sem resposta"
+};
+
+function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status: AlcoholStatus }> }) {
+  return (
+    <div className="panel p-4 md:p-5">
+      <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Zero alcool da semana</h2>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-zinc-500">
+            <tr>
+              <th className="py-3">Atleta</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((row) => (
+              <tr key={row.participant}>
+                <td className="py-3 font-semibold text-white">{row.participant}</td>
+                <td className={row.status === "ok" ? "font-bold text-victory" : row.status === "broke" ? "font-bold text-danger" : "text-zinc-400"}>
+                  {alcoholLabels[row.status]}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

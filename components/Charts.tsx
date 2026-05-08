@@ -4,18 +4,13 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis
 } from "recharts";
-
-const colors = ["#f5c542", "#39d98a", "#f59e0b", "#ef4444", "#8b5cf6", "#38bdf8"];
 
 type ChartCardProps = {
   title: string;
@@ -69,21 +64,6 @@ export function CompletionChart({ data }: { data: Array<Record<string, string | 
         <Tooltip contentStyle={{ background: "#111318", border: "1px solid #ffffff20", borderRadius: 8 }} />
         <Bar dataKey="completionRate" name="Cumprimento %" fill="#39d98a" radius={[6, 6, 0, 0]} />
       </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-export function ActivityTypeChart({ data }: { data: Array<{ name: string; value: number }> }) {
-  return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" outerRadius={94} label>
-          {data.map((entry, index) => (
-            <Cell key={entry.name} fill={colors[index % colors.length]} />
-          ))}
-        </Pie>
-        <Tooltip contentStyle={{ background: "#111318", border: "1px solid #ffffff20", borderRadius: 8 }} />
-      </PieChart>
     </ResponsiveContainer>
   );
 }
