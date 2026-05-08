@@ -14,11 +14,23 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin()!;
-  const { data: participant, error } = await supabase
+  let { data: participant, error } = await supabase
     .from("participants")
     .select("gymrats_id, full_name, role, password_hash, password_salt")
     .eq("gymrats_id", body.gymratsId)
     .single();
+
+  if ((error || !participant) && body.gymratsId.startsWith("name:")) {
+    const fullName = body.gymratsId.replace(/^name:/, "");
+    const result = await supabase
+      .from("participants")
+      .select("gymrats_id, full_name, role, password_hash, password_salt")
+      .eq("full_name", fullName)
+      .single();
+
+    participant = result.data;
+    error = result.error;
+  }
 
   if (error || !participant) {
     return NextResponse.json({ error: "Participante nao encontrado." }, { status: 404 });
