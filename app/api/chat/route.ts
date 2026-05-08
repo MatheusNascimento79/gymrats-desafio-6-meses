@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     .from("weekly_chat_messages")
     .insert({
       week_key: currentWeekKey,
-      participant_gymrats_id: user.gymratsId,
+      participant_gymrats_id: null,
       participant: user.fullName,
       message
     })
