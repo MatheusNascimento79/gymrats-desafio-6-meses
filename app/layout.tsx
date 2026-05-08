@@ -11,7 +11,13 @@ export const metadata: Metadata = {
   title: "D185 - Desafio 6 Meses",
   description: "Painel esportivo do D185 para acompanhar atividades, zero alcool, rankings e a evolucao do desafio.",
   icons: {
-    icon: "/favicon.png",
+    icon: [
+      {
+        url: "/favicon.png",
+        type: "image/png",
+        sizes: "1254x1254"
+      }
+    ],
     shortcut: "/favicon.png",
     apple: "/favicon.png"
   },
