@@ -19,18 +19,70 @@ export default function ZeroAlcoholPage() {
   const participants = getParticipants(activities);
   const currentWeekKey = weekKeyFromDate(new Date());
   const [records, setRecords] = useState<AlcoholRecord[]>([]);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setRecords(loadAlcoholRecords());
-  }, []);
+    let active = true;
+
+    async function loadRecords() {
+      try {
+        const response = await fetch(`/api/alcohol?weekKey=${currentWeekKey}`, { cache: "no-store" });
+
+        if (response.ok) {
+          const payload = (await response.json()) as { configured: boolean; records: AlcoholRecord[] };
+
+          if (payload.configured) {
+            if (active) {
+              setRecords(payload.records);
+            }
+            return;
+          }
+        }
+      } catch {
+        // Fall back to local storage while Supabase is not configured.
+      }
+
+      if (active) {
+        setRecords(loadAlcoholRecords());
+      }
+    }
+
+    loadRecords();
+
+    return () => {
+      active = false;
+    };
+  }, [currentWeekKey]);
 
   const stats = buildAlcoholStats(records, participants, currentWeekKey);
 
-  function setStatus(participant: string, status: AlcoholStatus) {
+  async function setStatus(participant: string, status: AlcoholStatus) {
+    setError("");
+
     const next = records.filter((record) => !(record.participant === participant && record.weekKey === currentWeekKey));
     next.push({ participant, weekKey: currentWeekKey, status });
     setRecords(next);
     saveAlcoholRecords(next);
+
+    try {
+      const response = await fetch("/api/alcohol", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ participant, weekKey: currentWeekKey, status, password })
+      });
+
+      if (!response.ok && response.status !== 503) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Erro ao salvar status.");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Failed to fetch") {
+        setError(err.message);
+      }
+    }
   }
 
   return (
@@ -41,6 +93,15 @@ export default function ZeroAlcoholPage() {
         <p className="mt-3 text-zinc-300">
           Controle manual por semana. Semana atual: <span className="font-bold text-gold">{weekLabel(currentWeekKey)}</span>.
         </p>
+        <input
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          type="password"
+          inputMode="numeric"
+          placeholder="Senha para salvar alteracoes"
+          className="mt-5 w-full max-w-md rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-gold/60"
+        />
+        {error ? <p className="mt-3 text-sm font-semibold text-danger">{error}</p> : null}
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

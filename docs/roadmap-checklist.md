@@ -30,3 +30,6 @@ Criar o MVP client-side do dashboard **GYMRATS - Desafio 6 Meses**, preparado pa
 - [x] Adicionar modo de importação por substituição.
 - [x] Adicionar modo de mesclagem sem duplicar.
 - [x] Adicionar senha hardcoded para acessar a tela Importar.
+- [x] Preparar persistência central com Supabase.
+- [x] Criar APIs de leitura/importação centralizadas.
+- [x] Centralizar controle de Zero Álcool via API.

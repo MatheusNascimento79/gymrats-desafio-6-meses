@@ -16,6 +16,38 @@ npm run dev
 
 Acesse `http://localhost:3000`.
 
+## Persistencia central com Supabase
+
+Para que todos vejam os mesmos dados em qualquer aparelho, configure um banco Supabase.
+
+1. Crie um projeto em [Supabase](https://supabase.com).
+2. Abra **SQL Editor**.
+3. Execute o arquivo:
+
+```text
+docs/supabase-schema.sql
+```
+
+4. Na Vercel, abra o projeto e configure as variaveis em **Settings > Environment Variables**:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
+IMPORT_PASSWORD=12344321567
+```
+
+5. Faca um novo deploy.
+
+Com Supabase configurado:
+
+- o dashboard le atividades do banco central;
+- a tela Importar salva no banco central;
+- todos os aparelhos veem os mesmos dados;
+- o Zero Alcool tambem fica centralizado;
+- uploads duplicados sao ignorados pela chave unica `dedup_key`.
+
+Sem Supabase configurado, o app usa fallback local para desenvolvimento.
+
 ## Como importar dados
 
 1. Abra a tela **Importar**.
@@ -30,6 +62,8 @@ Acesse `http://localhost:3000`.
 Nesta primeira versao, os dados ficam salvos no `localStorage` do navegador. Antes do primeiro import, o app mostra dados mockados para demonstracao.
 
 Para zerar os dados deste navegador, use o botao **Limpar dados importados** na tela **Importar**.
+
+Com Supabase configurado, esse botao limpa as atividades do banco central. Sem Supabase, limpa apenas este navegador.
 
 Duplicatas na mesclagem sao detectadas por:
 

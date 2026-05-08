@@ -42,26 +42,78 @@ export default function ImportPage() {
     }
   }
 
-  function confirmImport() {
+  async function confirmImport() {
+    setError("");
+
+    try {
+      const response = await fetch("/api/import", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password, mode, records })
+      });
+
+      if (response.ok) {
+        const payload = (await response.json()) as { saved: number; duplicates: number };
+        setActivities(mode === "replace" ? dedupeActivities(records).records : mergeActivities(activities, records).records);
+        setMessage(`${payload.saved} atividades salvas no banco central. ${payload.duplicates} duplicadas ignoradas.`);
+        setSaved(true);
+        return;
+      }
+
+      if (response.status !== 503) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Erro ao importar dados.");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Failed to fetch") {
+        setError(err.message);
+        return;
+      }
+    }
+
     if (mode === "replace") {
       const result = dedupeActivities(records);
       setActivities(result.records);
-      setMessage(`${result.records.length} atividades salvas. ${result.duplicates} duplicadas removidas do arquivo.`);
+      setMessage(`${result.records.length} atividades salvas neste navegador. ${result.duplicates} duplicadas removidas do arquivo.`);
     } else {
       const result = mergeActivities(activities, records);
       setActivities(result.records);
-      setMessage(`${result.added} novas atividades adicionadas. ${result.duplicates} duplicadas ignoradas.`);
+      setMessage(`${result.added} novas atividades adicionadas neste navegador. ${result.duplicates} duplicadas ignoradas.`);
     }
 
     setSaved(true);
   }
 
-  function clearImportedData() {
+  async function clearImportedData() {
+    setError("");
+
+    try {
+      const response = await fetch("/api/import", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (!response.ok && response.status !== 503) {
+        const payload = (await response.json()) as { error?: string };
+        throw new Error(payload.error ?? "Erro ao limpar dados.");
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message !== "Failed to fetch") {
+        setError(err.message);
+        return;
+      }
+    }
+
     setActivities([]);
     setRecords([]);
     setHeaders([]);
     setResolved({});
-    setMessage("Dados importados removidos deste navegador. Recarregue o dashboard para voltar aos dados demonstrativos ou importe a base real.");
+    setMessage("Dados importados removidos. Importe a base real para atualizar o dashboard.");
     setSaved(true);
   }
 
