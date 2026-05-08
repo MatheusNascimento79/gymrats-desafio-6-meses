@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, Flame, Medal, Target, Trophy, Users } from "lucide-react";
 import {
   buildAlcoholStats,
-  buildActivityTypeDistribution,
   buildOverallRanking,
   buildWeekSummaries,
   getBestAlcoholWeek,
@@ -33,7 +32,6 @@ export default function DashboardPage() {
   const weekRanking = [...currentWeek].sort((a, b) => b.activities - a.activities);
   const weeks = buildWeekSummaries(activities, participants);
   const insights = getInsights(activities, participants);
-  const activityTypes = buildActivityTypeDistribution(activities);
   const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const alcoholStats = buildAlcoholStats(alcoholRecords, participants, currentWeekKey);
   const bestAlcoholWeek = getBestAlcoholWeek(alcoholRecords, participants);
@@ -163,8 +161,7 @@ export default function DashboardPage() {
         <Ranking title="Ranking da semana" rows={weekRanking} fields={["activities", "missing"]} />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <ActivityTypeTable data={activityTypes} total={activities.length} />
+      <section>
         <ZeroAlcoholTable rows={alcoholStats.records} />
       </section>
 
@@ -179,44 +176,6 @@ export default function DashboardPage() {
           <CompletionChart data={weeks} />
         </ChartCard>
       </section>
-    </div>
-  );
-}
-
-function ActivityTypeTable({ data, total }: { data: Array<{ name: string; value: number }>; total: number }) {
-  return (
-    <div className="panel p-4 md:p-5">
-      <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Atividades por tipo</h2>
-      <div className="mt-4 hidden md:block">
-        <table className="w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-zinc-500">
-            <tr>
-              <th className="py-3">Tipo</th>
-              <th>Qtd.</th>
-              <th>%</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {data.slice(0, 10).map((item) => (
-              <tr key={item.name}>
-                <td className="py-3 font-semibold text-white">{item.name}</td>
-                <td className="font-bold text-gold">{item.value}</td>
-                <td className="text-zinc-300">{total ? Math.round((item.value / total) * 100) : 0}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-4 space-y-2 md:hidden">
-        {data.slice(0, 10).map((item) => (
-          <div key={item.name} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
-            <span className="font-semibold text-white">{item.name}</span>
-            <span className="shrink-0 font-bold text-gold">
-              {item.value} <span className="text-zinc-400">({total ? Math.round((item.value / total) * 100) : 0}%)</span>
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
