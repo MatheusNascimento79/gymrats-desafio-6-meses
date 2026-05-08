@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth-server";
 import { activityRowToRecord, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
@@ -10,18 +9,11 @@ export async function GET() {
   }
 
   const supabase = getSupabaseAdmin();
-  const user = await getCurrentUser();
-  let query = supabase!
+  const { data, error } = await supabase!
     .from("activities")
     .select("id, participant, activity_date, activity_type, duration_minutes, points, calories, distance, team")
     .order("activity_date", { ascending: true })
     .order("participant", { ascending: true });
-
-  if (user && !user.isSuperAdmin) {
-    query = user.gymratsId.startsWith("name:") ? query.eq("participant", user.fullName) : query.eq("participant_gymrats_id", user.gymratsId);
-  }
-
-  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ configured: true, error: error.message, records: [] }, { status: 500 });
