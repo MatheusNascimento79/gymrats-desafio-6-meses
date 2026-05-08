@@ -71,14 +71,21 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const hasParticipants = participants.length > 0;
+  const activeMode = hasParticipants ? mode : "setup";
+
+  useEffect(() => {
+    if (!gymratsId && participants[0]?.gymratsId) {
+      setGymratsId(participants[0].gymratsId);
+    }
+  }, [gymratsId, participants]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    const endpoint = mode === "setup" ? "/api/auth/setup" : mode === "register" ? "/api/auth/register" : "/api/auth/login";
+    const endpoint = activeMode === "setup" ? "/api/auth/setup" : activeMode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
-      mode === "setup"
+      activeMode === "setup"
         ? { password }
         : {
             gymratsId,
@@ -114,26 +121,34 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
         </p>
 
         {!hasParticipants ? (
-          <button
-            type="button"
-            onClick={() => setMode("setup")}
-            className="mt-5 rounded-lg border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-gold"
-          >
-            Setup inicial do super admin
-          </button>
-        ) : (
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setMode("login")} className={mode === "login" ? "rounded-lg bg-gold px-4 py-2 font-bold text-black" : "rounded-lg border border-white/10 px-4 py-2 font-bold text-zinc-300"}>
-              Entrar
-            </button>
-            <button type="button" onClick={() => setMode("register")} className={mode === "register" ? "rounded-lg bg-gold px-4 py-2 font-bold text-black" : "rounded-lg border border-white/10 px-4 py-2 font-bold text-zinc-300"}>
-              Primeiro acesso
-            </button>
+          <div className="mt-5 rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-gold">
+            <p className="font-bold">Nenhum participante importado ainda.</p>
+            <p className="mt-1 text-zinc-300">
+              Entre no setup inicial com a senha de admin, depois importe obrigatoriamente <b>members.csv</b> e <b>check_ins.csv</b>.
+            </p>
           </div>
+        ) : (
+          <>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setMode("login")} className={mode === "login" ? "rounded-lg bg-gold px-4 py-2 font-bold text-black" : "rounded-lg border border-white/10 px-4 py-2 font-bold text-zinc-300"}>
+                Entrar
+              </button>
+              <button type="button" onClick={() => setMode("register")} className={mode === "register" ? "rounded-lg bg-gold px-4 py-2 font-bold text-black" : "rounded-lg border border-white/10 px-4 py-2 font-bold text-zinc-300"}>
+                Primeiro acesso
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMode("setup")}
+              className="mt-3 rounded-lg border border-gold/30 bg-gold/10 px-4 py-2 text-sm font-bold text-gold"
+            >
+              Acesso super admin
+            </button>
+          </>
         )}
 
         <form onSubmit={submit} className="mt-6 space-y-4">
-          {mode !== "setup" ? (
+          {activeMode !== "setup" ? (
             <select
               value={gymratsId}
               onChange={(event) => setGymratsId(event.target.value)}
@@ -151,11 +166,11 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             type="password"
-            placeholder={mode === "setup" ? "Senha de setup" : "Senha"}
+            placeholder={activeMode === "setup" ? "Senha de setup do super admin" : "Senha"}
             className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none placeholder:text-zinc-500 focus:border-gold/60"
           />
 
-          {mode === "register" ? (
+          {activeMode === "register" ? (
             <input
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
@@ -168,7 +183,7 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
           {error ? <p className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm font-semibold text-danger">{error}</p> : null}
 
           <button type="submit" className="w-full rounded-lg bg-gold px-4 py-3 font-black uppercase text-black hover:bg-yellow-300">
-            {mode === "register" ? "Criar senha e entrar" : "Entrar"}
+            {activeMode === "register" ? "Criar senha e entrar" : activeMode === "setup" ? "Entrar como super admin" : "Entrar"}
           </button>
         </form>
       </section>
