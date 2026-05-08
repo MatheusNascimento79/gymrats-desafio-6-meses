@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const member = members.find((item) => item.full_name === record.participant);
     return {
       ...activityRecordToRow(record),
+      dedup_key: `gymrats-check-in:${record.id}`,
       participant_gymrats_id: member?.id ?? null
     };
   });
