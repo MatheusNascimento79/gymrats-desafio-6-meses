@@ -29,6 +29,7 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const [hasUnreadChat, setHasUnreadChat] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
   const visibleLinks = links.filter((link) => link.href !== "/importar" || user?.isSuperAdmin);
 
   useEffect(() => {
@@ -91,9 +92,46 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
     };
   }, [pathname, user]);
 
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    function updateHeaderVisibility() {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+
+      if (currentScrollY < 24) {
+        setHeaderVisible(true);
+      } else if (Math.abs(delta) > 8) {
+        setHeaderVisible(delta < 0);
+      }
+
+      lastScrollY = currentScrollY;
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(updateHeaderVisibility);
+        ticking = true;
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-asphalt/90 backdrop-blur">
+      <header
+        className={clsx(
+          "sticky top-0 z-40 border-b border-white/10 bg-asphalt/90 backdrop-blur transition-transform duration-300 ease-out",
+          headerVisible ? "translate-y-0" : "-translate-y-full"
+        )}
+      >
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
           <a href="/" className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-gold/40 bg-gold text-black">
