@@ -28,6 +28,34 @@ export async function GET() {
     return NextResponse.json({ configured: true, error: error.message, participants: [] }, { status: 500 });
   }
 
+  if (!data.length) {
+    const { data: activities, error: activitiesError } = await supabase
+      .from("activities")
+      .select("participant, team")
+      .order("participant", { ascending: true });
+
+    if (activitiesError) {
+      return NextResponse.json({ configured: true, error: activitiesError.message, participants: [] }, { status: 500 });
+    }
+
+    const names = new Map<string, string>();
+    (activities ?? []).forEach((activity) => {
+      if (activity.participant) {
+        names.set(activity.participant, activity.team || "member");
+      }
+    });
+
+    return NextResponse.json({
+      configured: true,
+      participants: Array.from(names.entries()).map(([fullName, role]) => ({
+        gymratsId: `name:${fullName}`,
+        fullName,
+        role,
+        hasPassword: false
+      }))
+    });
+  }
+
   return NextResponse.json({
     configured: true,
     participants: data.map((participant) => ({

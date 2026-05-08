@@ -18,7 +18,7 @@ export async function GET() {
     .order("participant", { ascending: true });
 
   if (user && !user.isSuperAdmin) {
-    query = query.eq("participant_gymrats_id", user.gymratsId);
+    query = user.gymratsId.startsWith("name:") ? query.eq("participant", user.fullName) : query.eq("participant_gymrats_id", user.gymratsId);
   }
 
   const { data, error } = await query;

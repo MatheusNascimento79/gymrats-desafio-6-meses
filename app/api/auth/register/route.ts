@@ -18,14 +18,42 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin()!;
-  const { data: participant, error } = await supabase
+  let { data: participant, error } = await supabase
     .from("participants")
     .select("gymrats_id, full_name, role, password_hash")
     .eq("gymrats_id", body.gymratsId)
     .single();
 
+  if ((error || !participant) && body.gymratsId.startsWith("name:")) {
+    const fullName = body.gymratsId.replace(/^name:/, "");
+    const { data: activity } = await supabase.from("activities").select("participant, team").eq("participant", fullName).limit(1).single();
+
+    if (activity?.participant) {
+      const { data: created, error: createError } = await supabase
+        .from("participants")
+        .upsert(
+          {
+            gymrats_id: body.gymratsId,
+            full_name: activity.participant,
+            role: activity.team || "member",
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: "gymrats_id" }
+        )
+        .select("gymrats_id, full_name, role, password_hash")
+        .single();
+
+      if (createError) {
+        return NextResponse.json({ error: createError.message }, { status: 500 });
+      }
+
+      participant = created;
+      error = null;
+    }
+  }
+
   if (error || !participant) {
-    return NextResponse.json({ error: "Participante nao encontrado no arquivo GymRats." }, { status: 404 });
+    return NextResponse.json({ error: "Participante nao encontrado nos dados GymRats importados." }, { status: 404 });
   }
 
   if (participant.password_hash) {
