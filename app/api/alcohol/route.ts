@@ -19,10 +19,6 @@ export async function GET(request: NextRequest) {
     query = query.eq("week_key", weekKey);
   }
 
-  if (user && !user.isSuperAdmin) {
-    query = query.eq("participant", user.fullName);
-  }
-
   const { data, error } = await query;
 
   if (error) {
@@ -64,7 +60,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: existingError.message }, { status: 500 });
   }
 
-  if (existing?.status === "broke" && body.status !== "broke") {
+  if (!user.isSuperAdmin && existing?.status === "broke" && body.status !== "broke") {
     return NextResponse.json({ error: "Status Vish Bebi fica travado ate virar a semana." }, { status: 409 });
   }
 

@@ -23,7 +23,7 @@ const statusLabels: Record<AlcoholStatus, string> = {
 export default function ZeroAlcoholPage() {
   const { activities, participants: importedParticipants } = useChallengeData();
   const { user } = useAuth();
-  const participants = user?.isSuperAdmin ? (importedParticipants.length ? importedParticipants : getParticipants(activities)) : user ? [{ name: user.fullName, role: user.role }] : [];
+  const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeekKey = weekKeyFromDate(new Date());
   const [records, setRecords] = useState<AlcoholRecord[]>([]);
   const [error, setError] = useState("");
@@ -68,7 +68,12 @@ export default function ZeroAlcoholPage() {
 
     const current = records.find((record) => record.participant === participant && record.weekKey === currentWeekKey);
 
-    if (current?.status === "broke" && status !== "broke") {
+    if (!user?.isSuperAdmin && participant !== user?.fullName) {
+      setError("Voce so pode alterar o seu proprio status.");
+      return;
+    }
+
+    if (!user?.isSuperAdmin && current?.status === "broke" && status !== "broke") {
       setError("Status Vish Bebi fica travado ate virar a semana.");
       return;
     }
@@ -106,7 +111,7 @@ export default function ZeroAlcoholPage() {
         <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Compromisso paralelo</p>
         <h1 className="mt-2 font-[var(--font-oswald)] text-4xl font-bold uppercase text-white sm:text-5xl">Zero Alcool</h1>
         <p className="mt-3 text-zinc-300">
-          {user?.isSuperAdmin ? "Controle geral manual por semana." : "Atualize somente o seu status semanal."} Semana atual:{" "}
+          {user?.isSuperAdmin ? "Controle geral manual por semana." : "Visualize todos e atualize somente o seu status semanal."} Semana atual:{" "}
           <span className="font-bold text-gold">{weekLabel(currentWeekKey)}</span>.
         </p>
         {error ? <p className="mt-3 text-sm font-semibold text-danger">{error}</p> : null}
@@ -140,13 +145,14 @@ export default function ZeroAlcoholPage() {
                   <td>
                     <div className="flex flex-wrap gap-2">
                       {options.map((option) => {
-                        const locked = record.status === "broke" && option.value !== "broke";
+                        const canEdit = user?.isSuperAdmin || record.participant === user?.fullName;
+                        const locked = !user?.isSuperAdmin && record.status === "broke" && option.value !== "broke";
 
                         return (
                         <button
                           key={option.value}
                           type="button"
-                          disabled={locked}
+                          disabled={!canEdit || locked}
                           onClick={() => setStatus(record.participant, option.value)}
                           className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
                         >
@@ -155,7 +161,8 @@ export default function ZeroAlcoholPage() {
                         );
                       })}
                     </div>
-                    {record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
+                    {!user?.isSuperAdmin && record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
+                    {!user?.isSuperAdmin && record.participant !== user?.fullName ? <p className="mt-2 text-xs text-zinc-500">Somente {record.participant} pode alterar.</p> : null}
                   </td>
                 </tr>
               ))}
@@ -173,13 +180,14 @@ export default function ZeroAlcoholPage() {
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {options.map((option) => {
-                  const locked = record.status === "broke" && option.value !== "broke";
+                  const canEdit = user?.isSuperAdmin || record.participant === user?.fullName;
+                  const locked = !user?.isSuperAdmin && record.status === "broke" && option.value !== "broke";
 
                   return (
                   <button
                     key={option.value}
                     type="button"
-                    disabled={locked}
+                    disabled={!canEdit || locked}
                     onClick={() => setStatus(record.participant, option.value)}
                     className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -188,7 +196,8 @@ export default function ZeroAlcoholPage() {
                   );
                 })}
               </div>
-              {record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
+              {!user?.isSuperAdmin && record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
+              {!user?.isSuperAdmin && record.participant !== user?.fullName ? <p className="mt-2 text-xs text-zinc-500">Somente {record.participant} pode alterar.</p> : null}
             </div>
           ))}
         </div>
