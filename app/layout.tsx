@@ -8,7 +8,12 @@ const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
 
 export const metadata: Metadata = {
   title: "GYMRATS - Desafio 6 Meses",
-  description: "Dashboard esportivo para acompanhar atividades e zero álcool do desafio GymRats."
+  description: "Dashboard esportivo para acompanhar atividades e zero álcool do desafio GymRats.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
