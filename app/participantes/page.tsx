@@ -24,7 +24,7 @@ export default function ParticipantsPage() {
     <div className="space-y-6">
       <section className="panel p-5 md:p-7">
         <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Elenco do desafio</p>
-        <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Participantes</h1>
+        <h1 className="mt-2 font-[var(--font-oswald)] text-4xl font-bold uppercase text-white sm:text-5xl">Participantes</h1>
         <div className="mt-5 flex max-w-md items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-3 py-2">
           <Search size={18} className="text-zinc-500" />
           <input
@@ -49,20 +49,20 @@ export default function ParticipantsPage() {
               onClick={() => setSelectedParticipant(participant.name)}
               className="panel p-4 text-left transition hover:border-gold/40 hover:bg-steel/80"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-gold text-black">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gold text-black">
                     <UserRound size={22} />
                   </span>
-                  <div>
-                    <h2 className="font-bold text-white">{participant.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words font-bold text-white">{participant.name}</h2>
                     {participant.team ? <p className="text-sm text-zinc-400">{participant.team}</p> : null}
                   </div>
                 </div>
                 {week ? <StatusBadge status={week.status} /> : null}
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div className="mt-4 grid gap-2 text-center min-[380px]:grid-cols-3">
                 <Mini label="Na semana" value={weeklyActivities} />
                 <Mini label="No total" value={rank?.totalActivities ?? 0} />
                 <Mini label="Streak" value={rank?.streak ?? 0} />
@@ -97,7 +97,7 @@ function ActivityModal({ participant, activities, onClose }: { participant: stri
         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-4 md:p-5">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-gold">Atividades</p>
-            <h2 className="mt-1 font-[var(--font-oswald)] text-3xl font-bold uppercase text-white">{participant}</h2>
+            <h2 className="mt-1 break-words font-[var(--font-oswald)] text-2xl font-bold uppercase text-white sm:text-3xl">{participant}</h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg border border-white/10 bg-white/[0.04] p-2 text-zinc-300 transition hover:text-white" aria-label="Fechar">
             <X size={20} />

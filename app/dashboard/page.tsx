@@ -75,7 +75,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr] lg:items-center">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Disciplina semanal</p>
-            <h1 className="mt-3 font-[var(--font-oswald)] text-5xl font-bold uppercase leading-none text-white md:text-7xl">
+            <h1 className="mt-3 font-[var(--font-oswald)] text-4xl font-bold uppercase leading-none text-white sm:text-5xl md:text-7xl">
               Todos bateram 3 atividades?
             </h1>
             <p className="mt-4 max-w-3xl text-lg text-zinc-300">
@@ -90,7 +90,7 @@ export default function DashboardPage() {
 
           <div className="rounded-lg border border-white/10 bg-black/40 p-5 text-center">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-400">Status da semana</p>
-            <p className="mt-3 font-[var(--font-oswald)] text-7xl font-bold text-gold">{completionRate}%</p>
+            <p className="mt-3 font-[var(--font-oswald)] text-6xl font-bold text-gold md:text-7xl">{completionRate}%</p>
             <p className={`mt-2 text-xl font-black ${collectiveDone ? "text-victory" : "text-amberline"}`}>
               {collectiveDone ? "Meta coletiva batida" : "Ainda faltam atletas"}
             </p>
@@ -108,8 +108,21 @@ export default function DashboardPage() {
       <section className="grid gap-6 lg:grid-cols-[1fr_0.85fr]">
         <div className="panel p-4 md:p-5">
           <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Status semanal por atleta</h2>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left">
+          <div className="mt-4 space-y-2 md:hidden">
+            {currentWeek.map((item) => (
+              <div key={item.participant} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-white">{item.participant}</span>
+                  <StatusBadge status={item.status} />
+                </div>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Atividades: <b className="text-gold">{item.activities}</b>
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 hidden md:block">
+            <table className="w-full text-left">
               <thead className="text-xs uppercase tracking-wide text-zinc-500">
                 <tr>
                   <th className="py-3">Atleta</th>
@@ -174,8 +187,8 @@ function ActivityTypeTable({ data, total }: { data: Array<{ name: string; value:
   return (
     <div className="panel p-4 md:p-5">
       <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Atividades por tipo</h2>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[420px] text-left text-sm">
+      <div className="mt-4 hidden md:block">
+        <table className="w-full text-left text-sm">
           <thead className="text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="py-3">Tipo</th>
@@ -194,6 +207,16 @@ function ActivityTypeTable({ data, total }: { data: Array<{ name: string; value:
           </tbody>
         </table>
       </div>
+      <div className="mt-4 space-y-2 md:hidden">
+        {data.slice(0, 10).map((item) => (
+          <div key={item.name} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
+            <span className="font-semibold text-white">{item.name}</span>
+            <span className="shrink-0 font-bold text-gold">
+              {item.value} <span className="text-zinc-400">({total ? Math.round((item.value / total) * 100) : 0}%)</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -208,8 +231,8 @@ function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status:
   return (
     <div className="panel p-4 md:p-5">
       <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Zero alcool da semana</h2>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[520px] text-left text-sm">
+      <div className="mt-4 hidden md:block">
+        <table className="w-full text-left text-sm">
           <thead className="text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="py-3">Atleta</th>
@@ -228,6 +251,16 @@ function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status:
           </tbody>
         </table>
       </div>
+      <div className="mt-4 space-y-2 md:hidden">
+        {rows.map((row) => (
+          <div key={row.participant} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
+            <span className="font-semibold text-white">{row.participant}</span>
+            <span className={row.status === "ok" ? "shrink-0 font-bold text-victory" : row.status === "broke" ? "shrink-0 font-bold text-danger" : "shrink-0 text-zinc-400"}>
+              {alcoholLabels[row.status]}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -235,8 +268,8 @@ function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status:
 function Insight({ icon: Icon, label, value }: { icon: typeof Trophy; label: string; value: string }) {
   return (
     <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
-      <Icon className="mt-0.5 text-gold" size={18} />
-      <p>
+      <Icon className="mt-0.5 shrink-0 text-gold" size={18} />
+      <p className="min-w-0 break-words">
         <span className="block font-bold text-white">{label}</span>
         {value}
       </p>
@@ -250,12 +283,12 @@ function Ranking({ title, rows, fields }: { title: string; rows: Array<Record<st
       <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">{title}</h2>
       <div className="mt-4 space-y-2">
         {rows.map((row, index) => (
-          <div key={`${row.participant}-${index}`} className="grid grid-cols-[42px_1fr_auto] items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <div key={`${row.participant}-${index}`} className="grid gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3 sm:grid-cols-[42px_1fr_auto] sm:items-center sm:gap-3">
             <span className="font-[var(--font-oswald)] text-2xl font-bold text-gold">#{index + 1}</span>
             <span className="font-semibold text-white">{row.participant}</span>
-            <span className="text-right text-sm text-zinc-300">
+            <span className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-zinc-300 sm:justify-end sm:text-right">
               {fields.map((field) => (
-                <span key={field} className="ml-3">
+                <span key={field}>
                   <b className="text-white">{row[field] ?? 0}</b> {field === "totalActivities" || field === "activities" ? "ativ." : field === "completedWeeks" ? "sem." : field}
                 </span>
               ))}

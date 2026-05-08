@@ -95,7 +95,7 @@ export default function ZeroAlcoholPage() {
     <div className="space-y-6">
       <section className="panel p-5 md:p-7">
         <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Compromisso paralelo</p>
-        <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Zero Alcool</h1>
+        <h1 className="mt-2 font-[var(--font-oswald)] text-4xl font-bold uppercase text-white sm:text-5xl">Zero Alcool</h1>
         <p className="mt-3 text-zinc-300">
           {user?.isSuperAdmin ? "Controle geral manual por semana." : "Atualize somente o seu status semanal."} Semana atual:{" "}
           <span className="font-bold text-gold">{weekLabel(currentWeekKey)}</span>.
@@ -112,8 +112,8 @@ export default function ZeroAlcoholPage() {
 
       <section className="panel p-5">
         <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Controle semanal</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
+        <div className="mt-4 hidden md:block">
+          <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-zinc-500">
               <tr>
                 <th className="py-3">Atleta</th>
@@ -146,6 +146,30 @@ export default function ZeroAlcoholPage() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="mt-4 space-y-3 md:hidden">
+          {stats.records.map((record) => (
+            <div key={record.participant} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-white">{record.participant}</span>
+                <span className={record.status === "ok" ? "font-bold text-victory" : record.status === "broke" ? "font-bold text-danger" : "text-zinc-400"}>
+                  {statusLabels[record.status]}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStatus(record.participant, option.value)}
+                    className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>

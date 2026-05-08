@@ -18,12 +18,12 @@ const tones = {
 export function StatCard({ label, value, helper, icon: Icon, tone = "neutral" }: StatCardProps) {
   return (
     <div className="metric-card">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-sm font-medium text-zinc-400">{label}</p>
-          <p className="mt-2 font-[var(--font-oswald)] text-4xl font-bold text-white">{value}</p>
+          <p className="mt-2 break-words font-[var(--font-oswald)] text-4xl font-bold text-white">{value}</p>
         </div>
-        <span className={`rounded-lg border p-2 ${tones[tone]}`}>
+        <span className={`shrink-0 rounded-lg border p-2 ${tones[tone]}`}>
           <Icon size={20} />
         </span>
       </div>

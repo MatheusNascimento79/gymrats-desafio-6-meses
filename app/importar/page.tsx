@@ -140,7 +140,7 @@ export default function ImportPage() {
     <div className="space-y-6">
       <section className="panel p-5 md:p-7">
         <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Importacao oficial</p>
-        <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Carregar exports GymRats</h1>
+        <h1 className="mt-2 font-[var(--font-oswald)] text-4xl font-bold uppercase text-white sm:text-5xl">Carregar exports GymRats</h1>
         <p className="mt-3 max-w-3xl text-zinc-300">
           Suba sempre os arquivos obrigatorios <b>members.csv</b> e <b>check_ins.csv</b>. O primeiro define quem pode logar; o segundo alimenta as atividades.
         </p>
@@ -148,9 +148,9 @@ export default function ImportPage() {
 
       <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="panel p-5">
-          <label className="flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gold/40 bg-gold/5 p-6 text-center transition hover:bg-gold/10">
+          <label className="flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gold/40 bg-gold/5 p-5 text-center transition hover:bg-gold/10 sm:min-h-64 sm:p-6">
             <UploadCloud className="text-gold" size={42} />
-            <span className="mt-4 font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Selecionar arquivos</span>
+            <span className="mt-4 font-[var(--font-oswald)] text-xl font-bold uppercase text-white sm:text-2xl">Selecionar arquivos</span>
             <span className="mt-2 text-sm text-zinc-400">Obrigatorios: members.csv e check_ins.csv</span>
             <input className="hidden" type="file" accept=".csv" multiple onChange={(event) => handleFiles(event.target.files)} />
           </label>

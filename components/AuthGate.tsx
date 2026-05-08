@@ -108,13 +108,13 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl items-center px-4 py-8">
-      <section className="panel w-full p-6 md:p-8">
+    <main className="mx-auto flex min-h-screen max-w-xl items-center px-3 py-6 sm:px-4 md:py-8">
+      <section className="panel w-full p-5 sm:p-6 md:p-8">
         <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-gold text-black">
           <Dumbbell size={28} />
         </span>
         <p className="mt-6 text-sm font-black uppercase tracking-[0.28em] text-gold">D185</p>
-        <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Acesso do desafio</h1>
+        <h1 className="mt-2 font-[var(--font-oswald)] text-4xl font-bold uppercase text-white sm:text-5xl">Acesso do desafio</h1>
         <p className="mt-3 text-zinc-300">
           Escolha seu nome cadastrado no GymRats. No primeiro acesso, crie sua senha.
         </p>
@@ -128,7 +128,7 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
           </div>
         ) : (
           <>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <button type="button" onClick={() => setMode("login")} className={mode === "login" ? "rounded-lg bg-gold px-4 py-2 font-bold text-black" : "rounded-lg border border-white/10 px-4 py-2 font-bold text-zinc-300"}>
                 Entrar
               </button>

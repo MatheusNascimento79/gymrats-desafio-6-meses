@@ -42,7 +42,7 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
             </span>
           </a>
 
-          <nav className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
+          <nav className="flex flex-wrap gap-2 pb-1 md:justify-end md:pb-0">
             {visibleLinks.map((link) => {
               const Icon = link.icon;
               const active = pathname === link.href;
@@ -59,7 +59,7 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-3 py-5 sm:px-4 md:px-6 md:py-8">{children}</main>
     </div>
   );
 }
