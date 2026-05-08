@@ -44,13 +44,25 @@ export async function POST(request: NextRequest) {
   const { error: memberError } = await supabase.from("participants").upsert(memberRows, { onConflict: "gymrats_id" });
 
   if (memberError) {
-    return NextResponse.json({ error: memberError.message }, { status: 500 });
+    return NextResponse.json({ error: `Erro ao salvar participantes: ${memberError.message}` }, { status: 500 });
   }
 
   if (body.mode === "replace") {
-    const { error: deleteError } = await supabase.from("activities").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    const { data: existingActivities, error: listError } = await supabase.from("activities").select("id");
+
+    if (listError) {
+      return NextResponse.json({ error: `Erro ao listar atividades antigas: ${listError.message}` }, { status: 500 });
+    }
+
+    const existingIds = (existingActivities ?? []).map((activity) => activity.id);
+
+    for (let index = 0; index < existingIds.length; index += 500) {
+      const chunk = existingIds.slice(index, index + 500);
+      const { error: deleteError } = await supabase.from("activities").delete().in("id", chunk);
+
+      if (deleteError) {
+        return NextResponse.json({ error: `Erro ao limpar atividades antigas: ${deleteError.message}` }, { status: 500 });
+      }
     }
   }
 
@@ -67,14 +79,40 @@ export async function POST(request: NextRequest) {
   let duplicates = mapped.skipped;
 
   if (rows.length) {
-    const { data, error } = await supabase.from("activities").upsert(rows, { onConflict: "gymrats_check_in_id", ignoreDuplicates: true }).select("id");
+    const checkInIds = rows.map((row) => row.gymrats_check_in_id).filter((id): id is string => Boolean(id));
+    const existingCheckInIds = new Set<string>();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    for (let index = 0; index < checkInIds.length; index += 500) {
+      const chunk = checkInIds.slice(index, index + 500);
+      const { data: existing, error: existingError } = await supabase
+        .from("activities")
+        .select("gymrats_check_in_id")
+        .in("gymrats_check_in_id", chunk);
+
+      if (existingError) {
+        return NextResponse.json({ error: `Erro ao verificar duplicados: ${existingError.message}` }, { status: 500 });
+      }
+
+      (existing ?? []).forEach((item) => {
+        if (item.gymrats_check_in_id) {
+          existingCheckInIds.add(item.gymrats_check_in_id);
+        }
+      });
     }
 
-    saved = data?.length ?? 0;
-    duplicates += rows.length - saved;
+    const newRows = rows.filter((row) => !row.gymrats_check_in_id || !existingCheckInIds.has(row.gymrats_check_in_id));
+    duplicates += rows.length - newRows.length;
+
+    for (let index = 0; index < newRows.length; index += 500) {
+      const chunk = newRows.slice(index, index + 500);
+      const { data, error } = await supabase.from("activities").insert(chunk).select("id");
+
+      if (error) {
+        return NextResponse.json({ error: `Erro ao inserir atividades: ${error.message}` }, { status: 500 });
+      }
+
+      saved += data?.length ?? 0;
+    }
   }
 
   await supabase.from("import_batches").insert({
