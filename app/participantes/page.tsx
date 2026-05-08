@@ -113,7 +113,7 @@ function ActivityModal({ participant, activities, onClose }: { participant: stri
                   <span className="font-semibold text-white">{activity.activityType}</span>
                   <span className="text-sm text-zinc-400">
                     {activity.durationMinutes ? `${activity.durationMinutes} min` : ""}
-                    {activity.distance ? `${activity.durationMinutes ? " · " : ""}${activity.distance} mi` : ""}
+                    {activity.distance ? `${activity.durationMinutes ? " · " : ""}${activity.distance} km` : ""}
                   </span>
                 </div>
               ))}
