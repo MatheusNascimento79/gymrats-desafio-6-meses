@@ -66,22 +66,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
 function LoginScreen({ participants, onDone }: { participants: ParticipantOption[]; onDone: () => Promise<void> }) {
   const [mode, setMode] = useState<"login" | "register" | "setup">("login");
-  const [gymratsId, setGymratsId] = useState(participants[0]?.gymratsId ?? "");
+  const [gymratsId, setGymratsId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const hasParticipants = participants.length > 0;
   const activeMode = hasParticipants ? mode : "setup";
 
-  useEffect(() => {
-    if (!gymratsId && participants[0]?.gymratsId) {
-      setGymratsId(participants[0].gymratsId);
-    }
-  }, [gymratsId, participants]);
-
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+
+    if (activeMode !== "setup" && !gymratsId) {
+      setError("Escolha seu nome.");
+      return;
+    }
 
     const endpoint = activeMode === "setup" ? "/api/auth/setup" : activeMode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
@@ -154,6 +153,9 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
               onChange={(event) => setGymratsId(event.target.value)}
               className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-gold/60"
             >
+              <option value="" disabled>
+                Escolha seu nome
+              </option>
               {participants.map((participant) => (
                 <option key={participant.gymratsId} value={participant.gymratsId}>
                   {participant.fullName}
