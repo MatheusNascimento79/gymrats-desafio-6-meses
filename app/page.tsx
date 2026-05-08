@@ -144,7 +144,7 @@ export default function DashboardPage() {
           <div className="mt-4 space-y-3 text-sm text-zinc-300">
             <Insight icon={Trophy} label="Melhor semana" value={insights.bestWeek ? `${insights.bestWeek.label}: ${insights.bestWeek.totalActivities} atividades` : "Sem dados"} />
             <Insight icon={Medal} label="Mais consistente" value={insights.mostConsistent ? `${insights.mostConsistent.participant}, ${insights.mostConsistent.completedWeeks} semanas completas` : "Sem dados"} />
-            <Insight icon={Activity} label="Maior evolucao" value={insights.biggestEvolution ? `${insights.biggestEvolution.participant}, delta ${insights.biggestEvolution.delta}` : "Sem dados"} />
+            <Insight icon={Activity} label="Sequencia diaria" value={insights.dailyStreak ? `${insights.dailyStreak.participant}, ${insights.dailyStreak.streak} dias direto` : "Sem dados"} />
             <Insight icon={Flame} label="Em risco" value={insights.atRisk.length ? insights.atRisk.map((item) => item.participant).join(", ") : "Ninguem em risco agora"} />
           </div>
         </div>

@@ -1,5 +1,6 @@
 import {
   addWeeks,
+  differenceInCalendarDays,
   differenceInCalendarWeeks,
   endOfMonth,
   endOfWeek,
@@ -8,6 +9,7 @@ import {
   isBefore,
   isWithinInterval,
   parseISO,
+  subDays,
   startOfMonth,
   startOfWeek
 } from "date-fns";
@@ -199,18 +201,7 @@ export function getInsights(records: ActivityRecord[], participants = getPartici
   );
   const mostConsistent = [...ranking].sort((a, b) => b.completedWeeks - a.completedWeeks || b.bestStreak - a.bestStreak)[0];
 
-  const midpoint = Math.max(1, Math.floor(weeks.length / 2));
-  const evolution = participants
-    .map((participant) => {
-      const firstHalf = weeks.slice(0, midpoint).reduce((sum, week) => {
-        return sum + filterByRange(records.filter((r) => r.participant === participant.name), parseISO(week.start), parseISO(week.end)).length;
-      }, 0);
-      const secondHalf = weeks.slice(midpoint).reduce((sum, week) => {
-        return sum + filterByRange(records.filter((r) => r.participant === participant.name), parseISO(week.start), parseISO(week.end)).length;
-      }, 0);
-      return { participant: participant.name, delta: secondHalf - firstHalf };
-    })
-    .sort((a, b) => b.delta - a.delta)[0];
+  const dailyStreak = buildDailyStreakRanking(records, participants)[0];
 
   const atRisk = currentWeek
     .filter((item) => item.activities < weeklyGoal)
@@ -223,10 +214,53 @@ export function getInsights(records: ActivityRecord[], participants = getPartici
   return {
     bestWeek,
     mostConsistent,
-    biggestEvolution: evolution,
+    dailyStreak,
     atRisk,
     averageAdherence
   };
+}
+
+export function buildDailyStreakRanking(records: ActivityRecord[], participants = getParticipants(records)) {
+  const today = new Date();
+
+  return participants
+    .map((participant) => {
+      const participantDays = new Set(
+        records
+          .filter((record) => record.participant === participant.name)
+          .map((record) => format(toDate(record.date), "yyyy-MM-dd"))
+      );
+
+      let streak = 0;
+      let cursor = today;
+
+      while (participantDays.has(format(cursor, "yyyy-MM-dd"))) {
+        streak += 1;
+        cursor = subDays(cursor, 1);
+      }
+
+      if (streak === 0 && participantDays.size) {
+        const latest = Array.from(participantDays).sort().at(-1);
+        if (latest) {
+          streak = 1;
+          cursor = subDays(parseISO(latest), 1);
+
+          while (participantDays.has(format(cursor, "yyyy-MM-dd"))) {
+            streak += 1;
+            cursor = subDays(cursor, 1);
+          }
+        }
+      }
+
+      return {
+        participant: participant.name,
+        streak,
+        daysSinceLastActivity: participantDays.size
+          ? differenceInCalendarDays(today, parseISO(Array.from(participantDays).sort().at(-1)!))
+          : null
+      };
+    })
+    .sort((a, b) => b.streak - a.streak || (a.daysSinceLastActivity ?? 999) - (b.daysSinceLastActivity ?? 999));
 }
 
 export function buildAlcoholStats(records: AlcoholRecord[], participants: Participant[], weekKey: string) {
