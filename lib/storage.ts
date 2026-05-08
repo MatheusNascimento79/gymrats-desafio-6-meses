@@ -23,6 +23,10 @@ export function saveActivities(records: ActivityRecord[]) {
   window.localStorage.setItem(activitiesKey, JSON.stringify(records));
 }
 
+export function clearActivities() {
+  window.localStorage.removeItem(activitiesKey);
+}
+
 export function loadAlcoholRecords() {
   if (typeof window === "undefined") {
     return [];

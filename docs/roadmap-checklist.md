@@ -23,3 +23,10 @@ Criar o MVP client-side do dashboard **GYMRATS - Desafio 6 Meses**, preparado pa
 - [x] Criar CSV de exemplo parecido com export do GymRats Pro.
 - [x] Validar normalização e cálculos com o CSV de exemplo.
 - [x] Documentar o fluxo de teste manual do importador.
+
+## Ajustes pós-publicação
+
+- [x] Adicionar limpeza dos dados importados no navegador.
+- [x] Adicionar modo de importação por substituição.
+- [x] Adicionar modo de mesclagem sem duplicar.
+- [x] Adicionar senha hardcoded para acessar a tela Importar.

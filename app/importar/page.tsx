@@ -1,18 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, FileSpreadsheet, UploadCloud, XCircle } from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, LockKeyhole, Trash2, UploadCloud, XCircle } from "lucide-react";
 import { parseActivityFile } from "@/lib/importer";
 import { useChallengeData } from "@/components/useChallengeData";
+import { dedupeActivities, mergeActivities } from "@/lib/dedupe";
+import { clearActivities } from "@/lib/storage";
 import type { ActivityRecord } from "@/lib/types";
 
+type ImportMode = "replace" | "merge";
+
+const importerPassword = "12344321567";
+
 export default function ImportPage() {
-  const { setActivities } = useChallengeData();
+  const { activities, setActivities } = useChallengeData();
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [resolved, setResolved] = useState<Record<string, string | undefined>>({});
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [message, setMessage] = useState("");
+  const [mode, setMode] = useState<ImportMode>("replace");
+  const [password, setPassword] = useState("");
+  const [authorized, setAuthorized] = useState(false);
 
   async function handleFile(file?: File) {
     if (!file) {
@@ -34,8 +44,77 @@ export default function ImportPage() {
   }
 
   function confirmImport() {
-    setActivities(records);
+    if (mode === "replace") {
+      const result = dedupeActivities(records);
+      setActivities(result.records);
+      setMessage(`${result.records.length} atividades salvas. ${result.duplicates} duplicadas removidas do arquivo.`);
+    } else {
+      const result = mergeActivities(activities, records);
+      setActivities(result.records);
+      setMessage(`${result.added} novas atividades adicionadas. ${result.duplicates} duplicadas ignoradas.`);
+    }
+
     setSaved(true);
+  }
+
+  function clearImportedData() {
+    clearActivities();
+    setActivities([]);
+    setRecords([]);
+    setHeaders([]);
+    setResolved({});
+    setMessage("Dados importados removidos deste navegador. Recarregue o dashboard para voltar aos dados demonstrativos ou importe a base real.");
+    setSaved(true);
+  }
+
+  function unlockImporter(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (password === importerPassword) {
+      setAuthorized(true);
+      return;
+    }
+
+    setError("Senha incorreta.");
+  }
+
+  if (!authorized) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <section className="panel p-5 md:p-7">
+          <span className="flex h-12 w-12 items-center justify-center rounded-lg border border-gold/30 bg-gold/10 text-gold">
+            <LockKeyhole size={24} />
+          </span>
+          <p className="mt-5 text-sm font-black uppercase tracking-[0.28em] text-gold">Acesso restrito</p>
+          <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Importar dados</h1>
+          <p className="mt-3 text-zinc-300">Digite a senha de importacao para carregar ou limpar arquivos do desafio.</p>
+
+          <form onSubmit={unlockImporter} className="mt-6 space-y-4">
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              inputMode="numeric"
+              placeholder="Senha"
+              className="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition placeholder:text-zinc-500 focus:border-gold/60"
+            />
+
+            {error ? (
+              <div className="flex gap-2 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+                <XCircle size={18} />
+                {error}
+              </div>
+            ) : null}
+
+            <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-gold px-4 py-3 font-black uppercase text-black transition hover:bg-yellow-300">
+              <LockKeyhole size={18} />
+              Entrar
+            </button>
+          </form>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -57,6 +136,33 @@ export default function ImportPage() {
             <input className="hidden" type="file" accept=".csv,.xls,.xlsx" onChange={(event) => handleFile(event.target.files?.[0])} />
           </label>
 
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Modo de importacao</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setMode("replace")}
+                className={`rounded-md border px-3 py-2 text-sm font-bold transition ${
+                  mode === "replace" ? "border-gold bg-gold text-black" : "border-white/10 bg-black/30 text-zinc-300 hover:border-gold/40"
+                }`}
+              >
+                Substituir base
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("merge")}
+                className={`rounded-md border px-3 py-2 text-sm font-bold transition ${
+                  mode === "merge" ? "border-gold bg-gold text-black" : "border-white/10 bg-black/30 text-zinc-300 hover:border-gold/40"
+                }`}
+              >
+                Mesclar sem duplicar
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-zinc-400">
+              Substituir e melhor para exports completos. Mesclar adiciona novas atividades e ignora duplicadas por atleta, data, tipo e duracao.
+            </p>
+          </div>
+
           {error ? (
             <div className="mt-4 flex gap-2 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
               <XCircle size={18} />
@@ -67,7 +173,7 @@ export default function ImportPage() {
           {saved ? (
             <div className="mt-4 flex gap-2 rounded-lg border border-victory/30 bg-victory/10 p-3 text-sm text-victory">
               <CheckCircle2 size={18} />
-              Dados importados com sucesso.
+              {message || "Dados importados com sucesso."}
             </div>
           ) : null}
 
@@ -79,6 +185,15 @@ export default function ImportPage() {
           >
             <FileSpreadsheet size={18} />
             Confirmar importacao
+          </button>
+
+          <button
+            type="button"
+            onClick={clearImportedData}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 font-black uppercase text-danger transition hover:bg-danger/20"
+          >
+            <Trash2 size={18} />
+            Limpar dados importados
           </button>
         </div>
 

@@ -19,11 +19,25 @@ Acesse `http://localhost:3000`.
 ## Como importar dados
 
 1. Abra a tela **Importar**.
-2. Envie um arquivo `.csv`, `.xls` ou `.xlsx` exportado oficialmente pelo GymRats Pro.
-3. Confira a previa e o mapeamento detectado.
-4. Clique em **Confirmar importacao**.
+2. Digite a senha de importacao.
+3. Envie um arquivo `.csv`, `.xls` ou `.xlsx` exportado oficialmente pelo GymRats Pro.
+4. Escolha o modo:
+   - **Substituir base**: remove a base atual e salva somente o arquivo novo.
+   - **Mesclar sem duplicar**: adiciona atividades novas e ignora duplicadas.
+5. Confira a previa e o mapeamento detectado.
+6. Clique em **Confirmar importacao**.
 
 Nesta primeira versao, os dados ficam salvos no `localStorage` do navegador. Antes do primeiro import, o app mostra dados mockados para demonstracao.
+
+Para zerar os dados deste navegador, use o botao **Limpar dados importados** na tela **Importar**.
+
+Duplicatas na mesclagem sao detectadas por:
+
+```text
+participante + data + tipo de atividade + duracao
+```
+
+Observacao: a senha do MVP fica no client-side e serve apenas como barreira simples de operacao, nao como seguranca forte.
 
 ## Teste com arquivo de exemplo
 
