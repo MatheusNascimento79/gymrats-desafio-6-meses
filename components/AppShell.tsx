@@ -6,11 +6,11 @@ import clsx from "clsx";
 import { AuthGate, LogoutButton, useAuth } from "@/components/AuthGate";
 
 const links = [
-  { href: "/", label: "Dashboard", icon: Activity },
+  { href: "/", label: "D185", icon: Dumbbell },
+  { href: "/dashboard", label: "Dashboard", icon: Activity },
   { href: "/importar", label: "Importar", icon: Upload },
   { href: "/participantes", label: "Atletas", icon: Users },
-  { href: "/zero-alcool", label: "Zero Alcool", icon: Flame },
-  { href: "/publico", label: "Publico", icon: Dumbbell }
+  { href: "/zero-alcool", label: "Zero Alcool", icon: Flame }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
