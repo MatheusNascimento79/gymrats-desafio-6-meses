@@ -119,7 +119,6 @@ export default function DashboardPage() {
                 <tr>
                   <th className="py-3">Atleta</th>
                   <th>Atividades</th>
-                  <th>Faltam</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -128,7 +127,6 @@ export default function DashboardPage() {
                   <tr key={item.participant} className="text-sm">
                     <td className="py-3 font-semibold text-white">{item.participant}</td>
                     <td className="font-bold text-gold">{item.activities}</td>
-                    <td className="text-zinc-300">{item.missing}</td>
                     <td>
                       <StatusBadge status={item.status} />
                     </td>
