@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, SendHorizonal, SmilePlus } from "lucide-react";
 import { weekLabel } from "@/lib/challenge";
+import { markChatMessagesRead } from "@/lib/chat-read";
 import { useAuth } from "@/components/AuthGate";
 import type { ChatMessage } from "@/lib/types";
 
@@ -48,6 +49,12 @@ export default function WeeklyChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length]);
+
+  useEffect(() => {
+    if (user && weekKey && messages.length) {
+      markChatMessagesRead(user.gymratsId, weekKey, messages);
+    }
+  }, [messages, user, weekKey]);
 
   async function sendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

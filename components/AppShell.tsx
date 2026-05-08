@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Activity, Dumbbell, Flame, MessageCircle, Upload, Users } from "lucide-react";
 import clsx from "clsx";
 import { AuthGate, LogoutButton, useAuth } from "@/components/AuthGate";
+import { chatReadEvent, getLastReadChatMessageId, markChatMessagesRead } from "@/lib/chat-read";
+import type { ChatMessage } from "@/lib/types";
 
 const links = [
   { href: "/", label: "D185", icon: Dumbbell },
@@ -25,7 +28,68 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 function AuthedShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [hasUnreadChat, setHasUnreadChat] = useState(false);
   const visibleLinks = links.filter((link) => link.href !== "/importar" || user?.isSuperAdmin);
+
+  useEffect(() => {
+    if (!user) {
+      setHasUnreadChat(false);
+      return;
+    }
+
+    let active = true;
+    const currentUser = user;
+
+    async function refreshUnreadChat() {
+      try {
+        const response = await fetch("/api/chat", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { weekKey?: string; messages?: ChatMessage[] };
+        const weekKey = payload.weekKey ?? "";
+        const messages = payload.messages ?? [];
+        const lastMessage = messages[messages.length - 1];
+
+        if (!active || !weekKey || !lastMessage) {
+          if (active) {
+            setHasUnreadChat(false);
+          }
+          return;
+        }
+
+        if (pathname === "/resenha") {
+          markChatMessagesRead(currentUser.gymratsId, weekKey, messages);
+          setHasUnreadChat(false);
+          return;
+        }
+
+        setHasUnreadChat(getLastReadChatMessageId(currentUser.gymratsId, weekKey) !== lastMessage.id);
+      } catch {
+        if (active) {
+          setHasUnreadChat(false);
+        }
+      }
+    }
+
+    refreshUnreadChat();
+
+    const interval = window.setInterval(refreshUnreadChat, 45000);
+    const onFocus = () => refreshUnreadChat();
+    const onRead = () => setHasUnreadChat(false);
+
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(chatReadEvent, onRead);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(chatReadEvent, onRead);
+    };
+  }, [pathname, user]);
 
   return (
     <div className="min-h-screen">
@@ -49,9 +113,12 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
               const active = pathname === link.href;
 
               return (
-                <a key={link.href} href={link.href} className={clsx("nav-link flex items-center gap-2", active && "nav-link-active")}>
+                <a key={link.href} href={link.href} className={clsx("nav-link relative flex items-center gap-2", active && "nav-link-active")}>
                   <Icon size={16} />
                   {link.label}
+                  {link.href === "/resenha" && hasUnreadChat && !active ? (
+                    <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-asphalt bg-danger" aria-label="Mensagens nao lidas" />
+                  ) : null}
                 </a>
               );
             })}
