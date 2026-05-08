@@ -26,9 +26,20 @@ export async function POST(request: NextRequest) {
 
   if ((error || !participant) && body.gymratsId.startsWith("name:")) {
     const fullName = body.gymratsId.replace(/^name:/, "");
+    const { data: existingByName } = await supabase
+      .from("participants")
+      .select("gymrats_id, full_name, role, password_hash")
+      .eq("full_name", fullName)
+      .single();
+
+    if (existingByName) {
+      participant = existingByName;
+      error = null;
+    }
+
     const { data: activity } = await supabase.from("activities").select("participant, team").eq("participant", fullName).limit(1).single();
 
-    if (activity?.participant) {
+    if (!participant && activity?.participant) {
       const { data: created, error: createError } = await supabase
         .from("participants")
         .upsert(
@@ -69,7 +80,7 @@ export async function POST(request: NextRequest) {
       password_created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
-    .eq("gymrats_id", body.gymratsId);
+    .eq("gymrats_id", participant.gymrats_id);
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
