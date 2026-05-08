@@ -35,6 +35,14 @@ export default function DashboardPage() {
   const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const alcoholStats = buildAlcoholStats(alcoholRecords, participants, currentWeekKey);
   const bestAlcoholWeek = getBestAlcoholWeek(alcoholRecords, participants);
+  const alcoholWeeks = weeks.map((week) => {
+    const ok = alcoholRecords.filter((record) => record.weekKey === week.weekKey && record.status === "ok").length;
+
+    return {
+      ...week,
+      alcoholCompletionRate: participants.length ? Math.round((ok / participants.length) * 100) : 0
+    };
+  });
 
   useEffect(() => {
     let active = true;
@@ -172,8 +180,11 @@ export default function DashboardPage() {
         <ChartCard title="Atividades por participante">
           <ParticipantBarChart data={overallRanking} />
         </ChartCard>
-        <ChartCard title="Cumprimento da meta por semana">
+        <ChartCard title="Metas de exercícios [%]">
           <CompletionChart data={weeks} />
+        </ChartCard>
+        <ChartCard title="Meta de Zero Alcool [%]">
+          <CompletionChart data={alcoholWeeks} dataKey="alcoholCompletionRate" name="Zero Alcool %" fill="#f5c542" />
         </ChartCard>
       </section>
     </div>

@@ -54,7 +54,17 @@ export function ParticipantBarChart({ data }: { data: Array<{ participant: strin
   );
 }
 
-export function CompletionChart({ data }: { data: Array<Record<string, string | number>> }) {
+export function CompletionChart({
+  data,
+  dataKey = "completionRate",
+  name = "Cumprimento %",
+  fill = "#39d98a"
+}: {
+  data: Array<Record<string, string | number>>;
+  dataKey?: string;
+  name?: string;
+  fill?: string;
+}) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data}>
@@ -62,7 +72,7 @@ export function CompletionChart({ data }: { data: Array<Record<string, string | 
         <XAxis dataKey="label" stroke="#a1a1aa" tick={{ fontSize: 12 }} />
         <YAxis stroke="#a1a1aa" domain={[0, 100]} />
         <Tooltip contentStyle={{ background: "#111318", border: "1px solid #ffffff20", borderRadius: 8 }} />
-        <Bar dataKey="completionRate" name="Cumprimento %" fill="#39d98a" radius={[6, 6, 0, 0]} />
+        <Bar dataKey={dataKey} name={name} fill={fill} radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
