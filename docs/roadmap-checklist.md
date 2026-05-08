@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Criar o MVP client-side do dashboard **GYMRATS - Desafio 6 Meses**, preparado para deploy gratuito na Vercel e para importação manual de exportações oficiais CSV/XLSX do GymRats Pro.
+Criar o MVP client-side do dashboard **D185 - Desafio 6 Meses**, preparado para deploy gratuito na Vercel e para importação manual de exportações oficiais CSV/XLSX do GymRats Pro.
 
 ## Checklist
 

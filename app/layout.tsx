@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
 
 export const metadata: Metadata = {
-  title: "GYMRATS - Desafio 6 Meses",
+  title: "D185 - Desafio 6 Meses",
   description: "Dashboard esportivo para acompanhar atividades e zero álcool do desafio GymRats.",
   icons: {
     icon: "/favicon.png",

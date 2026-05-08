@@ -113,7 +113,7 @@ function LoginScreen({ participants, onDone }: { participants: ParticipantOption
         <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-gold text-black">
           <Dumbbell size={28} />
         </span>
-        <p className="mt-6 text-sm font-black uppercase tracking-[0.28em] text-gold">GYMRATS</p>
+        <p className="mt-6 text-sm font-black uppercase tracking-[0.28em] text-gold">D185</p>
         <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Acesso do desafio</h1>
         <p className="mt-3 text-zinc-300">
           Escolha seu nome cadastrado no GymRats. No primeiro acesso, crie sua senha.

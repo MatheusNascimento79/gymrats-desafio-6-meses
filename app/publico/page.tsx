@@ -18,7 +18,7 @@ export default function PublicPage() {
         <div className="max-w-3xl">
           <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Placar oficial</p>
           <h1 className="mt-3 font-[var(--font-oswald)] text-6xl font-bold uppercase leading-none text-white md:text-8xl">
-            GYMRATS
+            D185
           </h1>
           <p className="mt-4 max-w-2xl text-xl font-semibold text-zinc-200">
             Desafio 6 Meses: 3 atividades por semana, zero alcool e consistencia ate o fim.

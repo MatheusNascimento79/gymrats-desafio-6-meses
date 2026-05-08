@@ -36,7 +36,7 @@ function AuthedShell({ children }: { children: React.ReactNode }) {
             </span>
             <span>
               <span className="block font-[var(--font-oswald)] text-3xl font-bold uppercase tracking-normal text-white">
-                GYMRATS
+                D185
               </span>
               <span className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">Desafio 6 Meses</span>
             </span>

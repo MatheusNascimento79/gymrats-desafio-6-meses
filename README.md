@@ -1,4 +1,4 @@
-# GYMRATS - Desafio 6 Meses
+# D185 - Desafio 6 Meses
 
 Dashboard client-side para acompanhar o desafio fitness de 6 meses:
 
