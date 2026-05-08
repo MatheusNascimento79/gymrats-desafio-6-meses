@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Activity, Dumbbell, Flame, Upload, Users } from "lucide-react";
+import { Activity, Dumbbell, Flame, MessageCircle, Upload, Users } from "lucide-react";
 import clsx from "clsx";
 import { AuthGate, LogoutButton, useAuth } from "@/components/AuthGate";
 
@@ -10,6 +10,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard", icon: Activity },
   { href: "/importar", label: "Importar", icon: Upload },
   { href: "/participantes", label: "Atletas", icon: Users },
+  { href: "/resenha", label: "Resenha", icon: MessageCircle },
   { href: "/zero-alcool", label: "Zero Alcool", icon: Flame }
 ];
 

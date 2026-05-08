@@ -58,6 +58,22 @@ create table if not exists public.alcohol_records (
 
 create index if not exists alcohol_records_week_key_idx on public.alcohol_records (week_key);
 
+create table if not exists public.weekly_chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  week_key date not null,
+  participant_gymrats_id text references public.participants(gymrats_id) on delete set null,
+  participant text not null,
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.weekly_chat_messages add column if not exists participant_gymrats_id text;
+alter table public.weekly_chat_messages add column if not exists participant text;
+alter table public.weekly_chat_messages add column if not exists message text;
+
+create index if not exists weekly_chat_messages_week_key_created_at_idx
+  on public.weekly_chat_messages (week_key, created_at);
+
 create table if not exists public.import_batches (
   id uuid primary key default gen_random_uuid(),
   mode text not null check (mode in ('replace', 'merge')),

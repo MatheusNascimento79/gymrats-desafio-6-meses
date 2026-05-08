@@ -55,6 +55,14 @@ export type AlcoholRecord = {
   status: AlcoholStatus;
 };
 
+export type ChatMessage = {
+  id: string;
+  participant: string;
+  message: string;
+  weekKey: string;
+  createdAt: string;
+};
+
 export type ColumnMapping = {
   participant: string[];
   date: string[];

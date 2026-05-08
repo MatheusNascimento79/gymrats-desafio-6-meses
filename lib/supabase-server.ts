@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { ActivityRecord, AlcoholRecord } from "@/lib/types";
+import type { ActivityRecord, AlcoholRecord, ChatMessage } from "@/lib/types";
 import { activityDedupKey } from "@/lib/dedupe";
 
 type ActivityRow = {
@@ -20,6 +20,14 @@ type AlcoholRow = {
   participant: string;
   week_key: string;
   status: AlcoholRecord["status"];
+};
+
+type ChatMessageRow = {
+  id: string;
+  participant: string;
+  message: string;
+  week_key: string;
+  created_at: string;
 };
 
 export function isSupabaseConfigured() {
@@ -85,5 +93,15 @@ export function alcoholRowToRecord(row: AlcoholRow): AlcoholRecord {
     participant: row.participant,
     weekKey: row.week_key,
     status: row.status
+  };
+}
+
+export function chatMessageRowToRecord(row: ChatMessageRow): ChatMessage {
+  return {
+    id: row.id,
+    participant: row.participant,
+    message: row.message,
+    weekKey: row.week_key,
+    createdAt: row.created_at
   };
 }
