@@ -181,8 +181,8 @@ export default function DashboardPage() {
 }
 
 const alcoholLabels: Record<AlcoholStatus, string> = {
-  ok: "Estou zero",
-  broke: "Vishh Bebi",
+  ok: "Estou zerado",
+  broke: "Vish Bebi",
   unknown: "Sem resposta"
 };
 

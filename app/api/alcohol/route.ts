@@ -48,7 +48,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Voce so pode alterar o seu proprio status." }, { status: 403 });
   }
 
+  if (body.status !== "ok" && body.status !== "broke") {
+    return NextResponse.json({ error: "Status invalido." }, { status: 400 });
+  }
+
   const supabase = getSupabaseAdmin()!;
+  const { data: existing, error: existingError } = await supabase
+    .from("alcohol_records")
+    .select("status")
+    .eq("participant", body.participant)
+    .eq("week_key", body.weekKey)
+    .maybeSingle();
+
+  if (existingError) {
+    return NextResponse.json({ error: existingError.message }, { status: 500 });
+  }
+
+  if (existing?.status === "broke" && body.status !== "broke") {
+    return NextResponse.json({ error: "Status Vish Bebi fica travado ate virar a semana." }, { status: 409 });
+  }
+
   const { error } = await supabase.from("alcohol_records").upsert(
     {
       participant: body.participant,

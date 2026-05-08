@@ -10,13 +10,13 @@ import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/components/AuthGate";
 
 const options: Array<{ value: AlcoholStatus; label: string }> = [
-  { value: "ok", label: "Estou zero" },
-  { value: "broke", label: "Vishh Bebi" }
+  { value: "ok", label: "Estou zerado" },
+  { value: "broke", label: "Vish Bebi" }
 ];
 
 const statusLabels: Record<AlcoholStatus, string> = {
-  ok: "Estou zero",
-  broke: "Vishh Bebi",
+  ok: "Estou zerado",
+  broke: "Vish Bebi",
   unknown: "Nao informado"
 };
 
@@ -66,6 +66,13 @@ export default function ZeroAlcoholPage() {
   async function setStatus(participant: string, status: AlcoholStatus) {
     setError("");
 
+    const current = records.find((record) => record.participant === participant && record.weekKey === currentWeekKey);
+
+    if (current?.status === "broke" && status !== "broke") {
+      setError("Status Vish Bebi fica travado ate virar a semana.");
+      return;
+    }
+
     const next = records.filter((record) => !(record.participant === participant && record.weekKey === currentWeekKey));
     next.push({ participant, weekKey: currentWeekKey, status });
     setRecords(next);
@@ -86,6 +93,8 @@ export default function ZeroAlcoholPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.message !== "Failed to fetch") {
+        setRecords(records);
+        saveAlcoholRecords(records);
         setError(err.message);
       }
     }
@@ -130,17 +139,23 @@ export default function ZeroAlcoholPage() {
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-2">
-                      {options.map((option) => (
+                      {options.map((option) => {
+                        const locked = record.status === "broke" && option.value !== "broke";
+
+                        return (
                         <button
                           key={option.value}
                           type="button"
+                          disabled={locked}
                           onClick={() => setStatus(record.participant, option.value)}
-                          className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold"
+                          className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {option.label}
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
+                    {record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
                   </td>
                 </tr>
               ))}
@@ -157,17 +172,23 @@ export default function ZeroAlcoholPage() {
                 </span>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {options.map((option) => (
+                {options.map((option) => {
+                  const locked = record.status === "broke" && option.value !== "broke";
+
+                  return (
                   <button
                     key={option.value}
                     type="button"
+                    disabled={locked}
                     onClick={() => setStatus(record.participant, option.value)}
-                    className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold"
+                    className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 font-semibold text-zinc-200 transition hover:border-gold/40 hover:text-gold disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {option.label}
                   </button>
-                ))}
+                  );
+                })}
               </div>
+              {record.status === "broke" ? <p className="mt-2 text-xs font-semibold text-danger">Travado ate virar a semana.</p> : null}
             </div>
           ))}
         </div>
