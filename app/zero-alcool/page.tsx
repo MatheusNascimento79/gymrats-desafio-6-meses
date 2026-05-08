@@ -10,10 +10,15 @@ import { StatCard } from "@/components/StatCard";
 import { useAuth } from "@/components/AuthGate";
 
 const options: Array<{ value: AlcoholStatus; label: string }> = [
-  { value: "ok", label: "Ok" },
-  { value: "broke", label: "Quebrou" },
-  { value: "unknown", label: "Nao informado" }
+  { value: "ok", label: "Estou zero" },
+  { value: "broke", label: "Vishh Bebi" }
 ];
+
+const statusLabels: Record<AlcoholStatus, string> = {
+  ok: "Estou zero",
+  broke: "Vishh Bebi",
+  unknown: "Nao informado"
+};
 
 export default function ZeroAlcoholPage() {
   const { activities, participants: importedParticipants } = useChallengeData();
@@ -121,7 +126,7 @@ export default function ZeroAlcoholPage() {
                 <tr key={record.participant}>
                   <td className="py-3 font-semibold text-white">{record.participant}</td>
                   <td className={record.status === "ok" ? "text-victory" : record.status === "broke" ? "text-danger" : "text-zinc-400"}>
-                    {options.find((option) => option.value === record.status)?.label}
+                    {statusLabels[record.status]}
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-2">
