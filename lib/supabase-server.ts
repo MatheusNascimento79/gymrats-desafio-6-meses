@@ -26,13 +26,23 @@ export function isSupabaseConfigured() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+function normalizeSupabaseUrl(rawUrl: string) {
+  try {
+    return new URL(rawUrl).origin;
+  } catch {
+    return rawUrl.replace(/\/+$/, "");
+  }
+}
+
 export function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !serviceKey) {
+  if (!rawUrl || !serviceKey) {
     return null;
   }
+
+  const url = normalizeSupabaseUrl(rawUrl);
 
   return createClient(url, serviceKey, {
     auth: {
