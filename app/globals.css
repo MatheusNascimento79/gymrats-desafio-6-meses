@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(245, 197, 66, 0.12), transparent 34rem),
+    radial-gradient(circle at 90% 10%, rgba(239, 68, 68, 0.09), transparent 28rem),
+    #08090b;
+  color: #f8fafc;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+::selection {
+  background: rgba(245, 197, 66, 0.35);
+}
+
+.panel {
+  @apply rounded-lg border border-white/10 bg-iron/90 shadow-glow;
+}
+
+.metric-card {
+  @apply rounded-lg border border-white/10 bg-steel/70 p-4;
+}
+
+.nav-link {
+  @apply rounded-md px-3 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-white/10 hover:text-white;
+}
+
+.nav-link-active {
+  @apply bg-gold text-black hover:bg-gold hover:text-black;
+}
