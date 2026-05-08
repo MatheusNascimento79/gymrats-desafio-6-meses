@@ -17,8 +17,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ActivityTypeChart, ChartCard, CompletionChart, ParticipantBarChart, WeeklyEvolutionChart } from "@/components/Charts";
 
 export default function DashboardPage() {
-  const { activities, loaded, usingMock } = useChallengeData();
-  const participants = getParticipants(activities);
+  const { activities, participants: importedParticipants, loaded, usingMock } = useChallengeData();
+  const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeekKey = weekKeyFromDate(new Date());
   const currentWeek = summarizeWeek(activities, participants, currentWeekKey);
   const completed = currentWeek.filter((item) => item.activities >= weeklyGoal).length;

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth-server";
 import { activityRowToRecord, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase-server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
@@ -7,11 +10,18 @@ export async function GET() {
   }
 
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase!
+  const user = await getCurrentUser();
+  let query = supabase!
     .from("activities")
     .select("id, participant, activity_date, activity_type, duration_minutes, points, calories, distance, team")
     .order("activity_date", { ascending: true })
     .order("participant", { ascending: true });
+
+  if (user && !user.isSuperAdmin) {
+    query = query.eq("participant_gymrats_id", user.gymratsId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ configured: true, error: error.message, records: [] }, { status: 500 });

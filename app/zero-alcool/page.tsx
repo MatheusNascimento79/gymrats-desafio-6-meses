@@ -7,6 +7,7 @@ import { loadAlcoholRecords, saveAlcoholRecords } from "@/lib/storage";
 import type { AlcoholRecord, AlcoholStatus } from "@/lib/types";
 import { useChallengeData } from "@/components/useChallengeData";
 import { StatCard } from "@/components/StatCard";
+import { useAuth } from "@/components/AuthGate";
 
 const options: Array<{ value: AlcoholStatus; label: string }> = [
   { value: "ok", label: "Ok" },
@@ -15,11 +16,11 @@ const options: Array<{ value: AlcoholStatus; label: string }> = [
 ];
 
 export default function ZeroAlcoholPage() {
-  const { activities } = useChallengeData();
-  const participants = getParticipants(activities);
+  const { activities, participants: importedParticipants } = useChallengeData();
+  const { user } = useAuth();
+  const participants = user?.isSuperAdmin ? (importedParticipants.length ? importedParticipants : getParticipants(activities)) : user ? [{ name: user.fullName, role: user.role }] : [];
   const currentWeekKey = weekKeyFromDate(new Date());
   const [records, setRecords] = useState<AlcoholRecord[]>([]);
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function ZeroAlcoholPage() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ participant, weekKey: currentWeekKey, status, password })
+        body: JSON.stringify({ participant, weekKey: currentWeekKey, status })
       });
 
       if (!response.ok && response.status !== 503) {
@@ -91,16 +92,9 @@ export default function ZeroAlcoholPage() {
         <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Compromisso paralelo</p>
         <h1 className="mt-2 font-[var(--font-oswald)] text-5xl font-bold uppercase text-white">Zero Alcool</h1>
         <p className="mt-3 text-zinc-300">
-          Controle manual por semana. Semana atual: <span className="font-bold text-gold">{weekLabel(currentWeekKey)}</span>.
+          {user?.isSuperAdmin ? "Controle geral manual por semana." : "Atualize somente o seu status semanal."} Semana atual:{" "}
+          <span className="font-bold text-gold">{weekLabel(currentWeekKey)}</span>.
         </p>
-        <input
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          type="password"
-          inputMode="numeric"
-          placeholder="Senha para salvar alteracoes"
-          className="mt-5 w-full max-w-md rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-gold/60"
-        />
         {error ? <p className="mt-3 text-sm font-semibold text-danger">{error}</p> : null}
       </section>
 

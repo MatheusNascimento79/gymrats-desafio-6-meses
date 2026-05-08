@@ -3,11 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { createMockActivities } from "@/data/mock";
 import { hasSavedActivities, loadActivities, saveActivities } from "@/lib/storage";
-import type { ActivityRecord } from "@/lib/types";
+import type { ActivityRecord, Participant } from "@/lib/types";
 
 type ActivitiesResponse = {
   configured: boolean;
   records: ActivityRecord[];
+};
+
+type ParticipantsResponse = {
+  participants: Array<{
+    gymratsId: string;
+    fullName: string;
+    role: string;
+    profilePictureUrl?: string;
+  }>;
 };
 
 export function useChallengeData() {
@@ -15,6 +24,7 @@ export function useChallengeData() {
   const [loaded, setLoaded] = useState(false);
   const [usingMock, setUsingMock] = useState(false);
   const [usingCentralData, setUsingCentralData] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -27,11 +37,22 @@ export function useChallengeData() {
           const payload = (await response.json()) as ActivitiesResponse;
 
           if (payload.configured) {
+            const participantsResponse = await fetch("/api/participants", { cache: "no-store" });
+            const participantsPayload = (await participantsResponse.json()) as ParticipantsResponse;
+
             if (!active) {
               return;
             }
 
             setActivitiesState(payload.records);
+            setParticipants(
+              (participantsPayload.participants ?? []).map((participant) => ({
+                name: participant.fullName,
+                gymratsId: participant.gymratsId,
+                role: participant.role,
+                profilePictureUrl: participant.profilePictureUrl
+              }))
+            );
             setUsingCentralData(true);
             setUsingMock(false);
             return;
@@ -49,6 +70,7 @@ export function useChallengeData() {
       }
 
       setActivitiesState(hasSavedData ? stored : createMockActivities());
+      setParticipants([]);
       setUsingCentralData(false);
       setUsingMock(!hasSavedData);
     }
@@ -73,11 +95,12 @@ export function useChallengeData() {
   return useMemo(
     () => ({
       activities,
+      participants,
       setActivities,
       loaded,
       usingMock,
       usingCentralData
     }),
-    [activities, loaded, usingMock, usingCentralData]
+    [activities, participants, loaded, usingMock, usingCentralData]
   );
 }

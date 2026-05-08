@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth-server";
 import { dedupeActivities } from "@/lib/dedupe";
 import { activityRecordToRow, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase-server";
 import type { ActivityRecord } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 type ImportBody = {
   password?: string;
@@ -73,10 +76,10 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Supabase nao configurado." }, { status: 503 });
   }
 
-  const body = (await request.json()) as { password?: string };
+  const user = await getCurrentUser();
 
-  if (!isAuthorized(body.password)) {
-    return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
+  if (!user?.isSuperAdmin) {
+    return NextResponse.json({ error: "Apenas o super admin pode limpar dados." }, { status: 403 });
   }
 
   const supabase = getSupabaseAdmin()!;

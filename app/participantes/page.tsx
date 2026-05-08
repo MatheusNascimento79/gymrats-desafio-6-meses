@@ -7,9 +7,9 @@ import { useChallengeData } from "@/components/useChallengeData";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export default function ParticipantsPage() {
-  const { activities } = useChallengeData();
+  const { activities, participants: importedParticipants } = useChallengeData();
   const [query, setQuery] = useState("");
-  const participants = getParticipants(activities);
+  const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeek = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const ranking = buildOverallRanking(activities, participants);
   const weeks = buildWeekSummaries(activities, participants);

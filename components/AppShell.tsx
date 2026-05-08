@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Activity, Dumbbell, Flame, Upload, Users } from "lucide-react";
 import clsx from "clsx";
+import { AuthGate, LogoutButton, useAuth } from "@/components/AuthGate";
 
 const links = [
   { href: "/", label: "Dashboard", icon: Activity },
@@ -14,7 +14,17 @@ const links = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGate>
+      <AuthedShell>{children}</AuthedShell>
+    </AuthGate>
+  );
+}
+
+function AuthedShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const visibleLinks = links.filter((link) => link.href !== "/importar" || user?.isSuperAdmin);
 
   return (
     <div className="min-h-screen">
@@ -33,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </a>
 
           <nav className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-            {links.map((link) => {
+            {visibleLinks.map((link) => {
               const Icon = link.icon;
               const active = pathname === link.href;
 
@@ -44,6 +54,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </a>
               );
             })}
+            <LogoutButton />
           </nav>
         </div>
       </header>

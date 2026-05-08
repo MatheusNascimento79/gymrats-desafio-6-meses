@@ -5,8 +5,8 @@ import { buildOverallRanking, getParticipants, summarizeWeek, weekKeyFromDate, w
 import { useChallengeData } from "@/components/useChallengeData";
 
 export default function PublicPage() {
-  const { activities } = useChallengeData();
-  const participants = getParticipants(activities);
+  const { activities, participants: importedParticipants } = useChallengeData();
+  const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const week = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const completed = week.filter((item) => item.activities >= weeklyGoal).length;
   const rate = participants.length ? Math.round((completed / participants.length) * 100) : 0;

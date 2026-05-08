@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth-server";
 import { alcoholRowToRecord, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase-server";
 import type { AlcoholRecord } from "@/lib/types";
 
-function isAuthorized(password?: string) {
-  return password && password === process.env.IMPORT_PASSWORD;
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -12,11 +11,16 @@ export async function GET(request: NextRequest) {
   }
 
   const weekKey = request.nextUrl.searchParams.get("weekKey");
+  const user = await getCurrentUser();
   const supabase = getSupabaseAdmin()!;
   let query = supabase.from("alcohol_records").select("participant, week_key, status").order("week_key", { ascending: true });
 
   if (weekKey) {
     query = query.eq("week_key", weekKey);
+  }
+
+  if (user && !user.isSuperAdmin) {
+    query = query.eq("participant", user.fullName);
   }
 
   const { data, error } = await query;
@@ -33,10 +37,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Supabase nao configurado." }, { status: 503 });
   }
 
-  const body = (await request.json()) as AlcoholRecord & { password?: string };
+  const body = (await request.json()) as AlcoholRecord;
+  const user = await getCurrentUser();
 
-  if (!isAuthorized(body.password)) {
-    return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
+  if (!user) {
+    return NextResponse.json({ error: "Login obrigatorio." }, { status: 401 });
+  }
+
+  if (!user.isSuperAdmin && body.participant !== user.fullName) {
+    return NextResponse.json({ error: "Voce so pode alterar o seu proprio status." }, { status: 403 });
   }
 
   const supabase = getSupabaseAdmin()!;

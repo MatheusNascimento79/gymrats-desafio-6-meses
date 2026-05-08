@@ -4,6 +4,8 @@ import { activityDedupKey } from "@/lib/dedupe";
 
 type ActivityRow = {
   id: string;
+  gymrats_check_in_id?: string | null;
+  participant_gymrats_id?: string | null;
   participant: string;
   activity_date: string;
   activity_type: string;
@@ -55,6 +57,7 @@ export function activityRowToRecord(row: ActivityRow): ActivityRecord {
 
 export function activityRecordToRow(record: ActivityRecord) {
   return {
+    gymrats_check_in_id: record.id.startsWith("import-") || record.id.startsWith("mock-") ? null : record.id,
     participant: record.participant,
     activity_date: record.date,
     activity_type: record.activityType || "Atividade",

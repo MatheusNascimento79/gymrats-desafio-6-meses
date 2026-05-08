@@ -48,27 +48,44 @@ Com Supabase configurado:
 
 Sem Supabase configurado, o app usa fallback local para desenvolvimento.
 
+## Login e permissoes
+
+Depois que `members.csv` for importado, a tela inicial passa a ter login por participante.
+
+- O campo de usuario e um dropdown com os nomes do `members.csv`.
+- Primeiro acesso: selecionar nome, criar senha e confirmar senha.
+- Proximos acessos: selecionar nome e senha.
+- Cada participante ve seus proprios dados e altera apenas seu proprio Zero Alcool.
+- `Matheus Nascimento` e o super admin e ve tudo.
+- A tela **Importar** aparece somente para o super admin.
+
+Antes do primeiro import de `members.csv`, use o **Setup inicial do super admin** na tela de login com a senha definida em `IMPORT_PASSWORD`.
+
 ## Como importar dados
 
 1. Abra a tela **Importar**.
 2. Digite a senha de importacao.
-3. Envie um arquivo `.csv`, `.xls` ou `.xlsx` exportado oficialmente pelo GymRats Pro.
-4. Escolha o modo:
-   - **Substituir base**: remove a base atual e salva somente o arquivo novo.
-   - **Mesclar sem duplicar**: adiciona atividades novas e ignora duplicadas.
-5. Confira a previa e o mapeamento detectado.
-6. Clique em **Confirmar importacao**.
+3. Envie obrigatoriamente:
+   - `members.csv`
+   - `check_ins.csv`
+4. Opcionalmente mantenha separados para uso futuro:
+   - `challenge.csv`
+   - `check_in_activities.csv`
+   - `check_in_media.csv`
+   - `messages.csv`
+5. Escolha o modo:
+   - **Substituir atividades**: remove atividades antigas e salva o arquivo novo, preservando participantes e senhas.
+   - **Mesclar sem duplicar**: adiciona check-ins novos sem duplicar.
+6. Clique em **Importar GymRats**.
 
 Nesta primeira versao, os dados ficam salvos no `localStorage` do navegador. Antes do primeiro import, o app mostra dados mockados para demonstracao.
 
-Para zerar os dados deste navegador, use o botao **Limpar dados importados** na tela **Importar**.
+Para zerar as atividades no banco central, o super admin pode usar **Limpar atividades** na tela **Importar**. Participantes e senhas sao preservados.
 
-Com Supabase configurado, esse botao limpa as atividades do banco central. Sem Supabase, limpa apenas este navegador.
-
-Duplicatas na mesclagem sao detectadas por:
+Na importacao real do GymRats, duplicatas sao detectadas por:
 
 ```text
-participante + data + tipo de atividade + duracao
+check_ins.id
 ```
 
 Observacao: a senha do MVP fica no client-side e serve apenas como barreira simples de operacao, nao como seguranca forte.
@@ -95,7 +112,7 @@ Resultado esperado para a semana de `2026-05-04` a `2026-05-10`:
 - 4 participantes pendentes;
 - 50% de cumprimento semanal.
 
-Voce tambem pode importar esse CSV pela tela **Importar** para testar a previa, o mapeamento e a atualizacao do dashboard.
+Esse CSV e apenas para validar os calculos antigos/localmente. A importacao real em producao usa `members.csv` e `check_ins.csv` do GymRats.
 
 ## Colunas aceitas
 

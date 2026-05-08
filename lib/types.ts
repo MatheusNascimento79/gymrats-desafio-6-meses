@@ -13,6 +13,17 @@ export type ActivityRecord = {
 export type Participant = {
   name: string;
   team?: string;
+  gymratsId?: string;
+  uuid?: string;
+  role?: string;
+  profilePictureUrl?: string;
+};
+
+export type AuthUser = {
+  gymratsId: string;
+  fullName: string;
+  role: string;
+  isSuperAdmin: boolean;
 };
 
 export type WeeklyStatus = "complete" | "almost" | "pending";
