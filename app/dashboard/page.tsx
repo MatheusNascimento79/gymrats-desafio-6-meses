@@ -248,7 +248,14 @@ function Ranking({ title, rows, fields }: { title: string; rows: Array<Record<st
             <span className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-zinc-300 sm:justify-end sm:text-right">
               {fields.map((field) => (
                 <span key={field}>
-                  <b className="text-white">{row[field] ?? 0}</b> {field === "totalActivities" || field === "activities" ? "ativ." : field === "completedWeeks" ? "sem." : field}
+                  <b className="text-white">{row[field] ?? 0}</b>{" "}
+                  {field === "totalActivities" || field === "activities"
+                    ? "ativ."
+                    : field === "completedWeeks"
+                      ? "sem."
+                      : field === "missing"
+                        ? "faltando"
+                        : field}
                 </span>
               ))}
             </span>
