@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, UserRound } from "lucide-react";
-import { buildOverallRanking, buildWeekSummaries, getParticipants, summarizeWeek, weekKeyFromDate } from "@/lib/challenge";
+import { buildOverallRanking, getParticipants, summarizeWeek, weekKeyFromDate } from "@/lib/challenge";
 import { useChallengeData } from "@/components/useChallengeData";
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -12,7 +12,6 @@ export default function ParticipantsPage() {
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeek = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const ranking = buildOverallRanking(activities, participants);
-  const weeks = buildWeekSummaries(activities, participants);
 
   const filtered = useMemo(
     () => participants.filter((participant) => participant.name.toLowerCase().includes(query.toLowerCase())),
@@ -39,10 +38,7 @@ export default function ParticipantsPage() {
         {filtered.map((participant) => {
           const week = currentWeek.find((item) => item.participant === participant.name);
           const rank = ranking.find((item) => item.participant === participant.name);
-          const participantWeeks = weeks.map((weekSummary) => {
-            const count = activities.filter((activity) => activity.participant === participant.name && activity.date >= weekSummary.start && activity.date <= weekSummary.end).length;
-            return { ...weekSummary, count };
-          });
+          const weeklyActivities = week?.activities ?? 0;
 
           return (
             <article key={participant.name} className="panel p-4">
@@ -60,27 +56,42 @@ export default function ParticipantsPage() {
               </div>
 
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <Mini label="Semana" value={week?.activities ?? 0} />
-                <Mini label="Total" value={rank?.totalActivities ?? 0} />
+                <Mini label="Na semana" value={weeklyActivities} />
+                <Mini label="No total" value={rank?.totalActivities ?? 0} />
                 <Mini label="Streak" value={rank?.streak ?? 0} />
               </div>
 
               <div className="mt-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Historico semanal</p>
-                <div className="mt-2 grid grid-cols-6 gap-1">
-                  {participantWeeks.slice(-12).map((item) => (
-                    <span
-                      key={item.weekKey}
-                      title={`${item.label}: ${item.count}`}
-                      className={`h-8 rounded ${item.count >= 3 ? "bg-victory" : item.count === 2 ? "bg-amberline" : "bg-danger/80"}`}
-                    />
-                  ))}
-                </div>
+                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Meta da semana</p>
+                <WeeklyGoalDots activities={weeklyActivities} />
               </div>
             </article>
           );
         })}
       </section>
+    </div>
+  );
+}
+
+function WeeklyGoalDots({ activities }: { activities: number }) {
+  const completed = Math.min(activities, 3);
+  const plus = activities >= 4;
+
+  return (
+    <div className="mt-2 flex items-center gap-1.5">
+      {[0, 1, 2].map((index) => {
+        const filled = index < completed;
+        const pending = activities === 0;
+
+        return (
+          <span
+            key={index}
+            title={`${activities} atividades na semana`}
+            className={`h-8 flex-1 rounded ${filled ? "bg-victory" : pending ? "bg-danger/80" : "bg-amberline"}`}
+          />
+        );
+      })}
+      {plus ? <span className="pl-1 font-[var(--font-oswald)] text-3xl font-bold leading-none text-victory">+</span> : null}
     </div>
   );
 }
