@@ -79,7 +79,7 @@ export default function ZeroAlcoholPage() {
     }
 
     const next = records.filter((record) => !(record.participant === participant && record.weekKey === currentWeekKey));
-    next.push({ participant, weekKey: currentWeekKey, status });
+    next.push({ participant, weekKey: currentWeekKey, status, updatedAt: new Date().toISOString() });
     setRecords(next);
     saveAlcoholRecords(next);
 
@@ -141,6 +141,9 @@ export default function ZeroAlcoholPage() {
                   <td className="py-3 font-semibold text-white">{record.participant}</td>
                   <td className={record.status === "ok" ? "text-victory" : record.status === "broke" ? "text-danger" : "text-zinc-400"}>
                     {statusLabels[record.status]}
+                    {record.status === "broke" && record.updatedAt ? (
+                      <span className="ml-2 text-xs font-semibold text-zinc-400">em {formatBrokenDate(record.updatedAt)}</span>
+                    ) : null}
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-2">
@@ -176,6 +179,9 @@ export default function ZeroAlcoholPage() {
                 <span className="font-semibold text-white">{record.participant}</span>
                 <span className={record.status === "ok" ? "font-bold text-victory" : record.status === "broke" ? "font-bold text-danger" : "text-zinc-400"}>
                   {statusLabels[record.status]}
+                  {record.status === "broke" && record.updatedAt ? (
+                    <span className="ml-2 text-xs font-semibold text-zinc-400">em {formatBrokenDate(record.updatedAt)}</span>
+                  ) : null}
                 </span>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -204,4 +210,11 @@ export default function ZeroAlcoholPage() {
       </section>
     </div>
   );
+}
+
+function formatBrokenDate(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit"
+  }).format(new Date(value));
 }

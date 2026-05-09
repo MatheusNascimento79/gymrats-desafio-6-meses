@@ -1,19 +1,48 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, UserRound, X } from "lucide-react";
-import { buildOverallRanking, getParticipants, summarizeWeek, weekKeyFromDate } from "@/lib/challenge";
+import { buildOverallRanking, buildZeroAlcoholRanking, getParticipants, summarizeWeek, weekKeyFromDate } from "@/lib/challenge";
 import { useChallengeData } from "@/components/useChallengeData";
 import { StatusBadge } from "@/components/StatusBadge";
-import type { ActivityRecord } from "@/lib/types";
+import type { ActivityRecord, AlcoholRecord } from "@/lib/types";
 
 export default function ParticipantsPage() {
   const { activities, participants: importedParticipants } = useChallengeData();
   const [query, setQuery] = useState("");
   const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
+  const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeek = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const ranking = buildOverallRanking(activities, participants);
+  const zeroAlcoholRanking = buildZeroAlcoholRanking(alcoholRecords, participants);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAlcohol() {
+      try {
+        const response = await fetch("/api/alcohol", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as { records: AlcoholRecord[] };
+        if (active) {
+          setAlcoholRecords(payload.records ?? []);
+        }
+      } catch {
+        if (active) {
+          setAlcoholRecords([]);
+        }
+      }
+    }
+
+    loadAlcohol();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(
     () => participants.filter((participant) => participant.name.toLowerCase().includes(query.toLowerCase())),
@@ -40,6 +69,7 @@ export default function ParticipantsPage() {
         {filtered.map((participant) => {
           const week = currentWeek.find((item) => item.participant === participant.name);
           const rank = ranking.find((item) => item.participant === participant.name);
+          const zeroRank = zeroAlcoholRanking.find((item) => item.participant === participant.name);
           const weeklyActivities = week?.activities ?? 0;
 
           return (
@@ -62,10 +92,15 @@ export default function ParticipantsPage() {
                 {week ? <StatusBadge status={week.status} /> : null}
               </div>
 
-              <div className="mt-4 grid gap-2 text-center min-[380px]:grid-cols-3">
+              <div className="mt-4 grid gap-2 text-center min-[380px]:grid-cols-2">
                 <Mini label="Na semana" value={weeklyActivities} />
                 <Mini label="No total" value={rank?.totalActivities ?? 0} />
-                <Mini label="Streak" value={rank?.streak ?? 0} />
+              </div>
+
+              <div className="mt-2 grid gap-2 text-center min-[380px]:grid-cols-3">
+                <Mini label="Exercicios" value={rank?.streak ?? 0} helper="sem." />
+                <Mini label="Zero atual" value={zeroRank?.currentStreak ?? 0} helper="dias" />
+                <Mini label="Melhor zero" value={zeroRank?.bestStreak ?? 0} helper="dias" />
               </div>
 
               <div className="mt-4">
@@ -150,11 +185,11 @@ function WeeklyGoalDots({ activities }: { activities: number }) {
   );
 }
 
-function Mini({ label, value }: { label: string; value: number }) {
+function Mini({ label, value, helper }: { label: string; value: number; helper?: string }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
       <p className="font-[var(--font-oswald)] text-2xl font-bold text-gold">{value}</p>
-      <p className="text-xs uppercase text-zinc-500">{label}</p>
+      <p className="text-xs uppercase text-zinc-500">{label}{helper ? ` · ${helper}` : ""}</p>
     </div>
   );
 }

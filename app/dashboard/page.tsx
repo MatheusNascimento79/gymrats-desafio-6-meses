@@ -8,6 +8,7 @@ import {
   buildWeekSummaries,
   getBestAlcoholWeek,
   getInsights,
+  getTopZeroAlcoholStreak,
   getParticipants,
   summarizeWeek,
   weekKeyFromDate,
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const alcoholStats = buildAlcoholStats(alcoholRecords, participants, currentWeekKey);
   const bestAlcoholWeek = getBestAlcoholWeek(alcoholRecords, participants);
+  const zeroAlcoholTop = getTopZeroAlcoholStreak(alcoholRecords, participants);
   const alcoholWeeks = weeks.map((week) => {
     const ok = alcoholRecords.filter((record) => record.weekKey === week.weekKey && record.status === "ok").length;
 
@@ -160,6 +162,7 @@ export default function DashboardPage() {
             <Insight icon={Activity} label="Sequencia diaria" value={insights.dailyStreak ? `${insights.dailyStreak.participant}, ${insights.dailyStreak.streak} dias direto` : "Sem dados"} />
             <Insight icon={Flame} label="Meta Semanal em Risco" value={insights.atRisk.length ? insights.atRisk.map((item) => item.participant).join(", ") : "Ninguem em risco agora"} />
             <Insight icon={Flame} label="Semana mais zero alcool" value={bestAlcoholWeek ? `${bestAlcoholWeek.label}: ${bestAlcoholWeek.ok} atletas (${bestAlcoholWeek.adherence}%)` : "Sem dados"} />
+            <Insight icon={Flame} label="A mais dias Zero Alcool" value={`${zeroAlcoholTop.days} dias - ${zeroAlcoholTop.participants.join(", ") || "Sem dados"}`} />
           </div>
         </div>
       </section>
@@ -197,7 +200,7 @@ const alcoholLabels: Record<AlcoholStatus, string> = {
   unknown: "Sem resposta"
 };
 
-function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status: AlcoholStatus }> }) {
+function ZeroAlcoholTable({ rows }: { rows: Array<{ participant: string; status: AlcoholStatus; updatedAt?: string }> }) {
   return (
     <div className="panel p-4 md:p-5">
       <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Zero alcool da semana</h2>

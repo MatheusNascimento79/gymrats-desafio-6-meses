@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 import type { ActivityRecord, AlcoholRecord, Participant, ParticipantWeek, WeekSummary } from "@/lib/types";
 
 export const weeklyGoal = 3;
+export const zeroAlcoholStartDate = "2026-05-04";
 
 export function toDate(value: string) {
   return parseISO(value);
@@ -308,7 +309,8 @@ export function buildAlcoholStats(records: AlcoholRecord[], participants: Partic
     const found = records.find((record) => record.participant === participant.name && record.weekKey === weekKey);
     return {
       participant: participant.name,
-      status: found?.status ?? "unknown"
+      status: found?.status ?? "unknown",
+      updatedAt: found?.updatedAt
     };
   });
 
@@ -322,6 +324,82 @@ export function buildAlcoholStats(records: AlcoholRecord[], participants: Partic
     broke,
     unknown,
     adherence: participants.length ? Math.round((ok / participants.length) * 100) : 0
+  };
+}
+
+function alcoholEventDate(record: AlcoholRecord) {
+  return (record.updatedAt ?? record.weekKey).slice(0, 10);
+}
+
+export function buildZeroAlcoholRanking(records: AlcoholRecord[], participants: Participant[], referenceDate = new Date()) {
+  const todayKey = format(referenceDate, "yyyy-MM-dd");
+  const startKey = zeroAlcoholStartDate;
+
+  return participants
+    .map((participant) => {
+      const participantRecords = records
+        .filter((record) => record.participant === participant.name)
+        .map((record) => ({
+          ...record,
+          eventDate: alcoholEventDate(record)
+        }))
+        .sort((a, b) => a.eventDate.localeCompare(b.eventDate));
+
+      if (!participantRecords.length) {
+        return {
+          participant: participant.name,
+          currentStreak: 0,
+          bestStreak: 0,
+          lastBrokeDate: null as string | null
+        };
+      }
+
+      const brokeDates = Array.from(new Set(participantRecords.filter((record) => record.status === "broke").map((record) => record.eventDate))).sort();
+      const hasOk = participantRecords.some((record) => record.status === "ok");
+
+      if (!brokeDates.length) {
+        const streak = hasOk ? Math.max(0, differenceInCalendarDays(parseISO(todayKey), parseISO(startKey))) : 0;
+        return {
+          participant: participant.name,
+          currentStreak: streak,
+          bestStreak: streak,
+          lastBrokeDate: null
+        };
+      }
+
+      const firstBrokeDate = brokeDates[0];
+      const hadOkBeforeFirstBreak = participantRecords.some((record) => record.status === "ok" && record.eventDate < firstBrokeDate);
+      const candidates: number[] = [];
+
+      if (hadOkBeforeFirstBreak) {
+        candidates.push(Math.max(0, differenceInCalendarDays(parseISO(firstBrokeDate), parseISO(startKey))));
+      }
+
+      for (let index = 0; index < brokeDates.length - 1; index += 1) {
+        candidates.push(Math.max(0, differenceInCalendarDays(parseISO(brokeDates[index + 1]), parseISO(brokeDates[index]))));
+      }
+
+      const lastBrokeDate = brokeDates[brokeDates.length - 1];
+      const currentStreak = Math.max(0, differenceInCalendarDays(parseISO(todayKey), parseISO(lastBrokeDate)));
+      candidates.push(currentStreak);
+
+      return {
+        participant: participant.name,
+        currentStreak,
+        bestStreak: Math.max(...candidates, 0),
+        lastBrokeDate
+      };
+    })
+    .sort((a, b) => b.currentStreak - a.currentStreak || a.participant.localeCompare(b.participant));
+}
+
+export function getTopZeroAlcoholStreak(records: AlcoholRecord[], participants: Participant[]) {
+  const ranking = buildZeroAlcoholRanking(records, participants);
+  const best = ranking[0]?.currentStreak ?? 0;
+
+  return {
+    days: best,
+    participants: ranking.filter((item) => item.currentStreak === best).map((item) => item.participant)
   };
 }
 

@@ -1,18 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Activity, Flame, Trophy } from "lucide-react";
-import { buildOverallRanking, getParticipants, summarizeWeek, weekKeyFromDate, weeklyGoal } from "@/lib/challenge";
+import { buildOverallRanking, buildZeroAlcoholRanking, getParticipants, summarizeWeek, weekKeyFromDate, weeklyGoal } from "@/lib/challenge";
 import { useChallengeData } from "@/components/useChallengeData";
+import type { AlcoholRecord } from "@/lib/types";
 
 export function PublicD185Page() {
   const { activities, participants: importedParticipants } = useChallengeData();
+  const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const week = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
   const completed = week.filter((item) => item.activities >= weeklyGoal).length;
   const rate = participants.length ? Math.round((completed / participants.length) * 100) : 0;
   const overallRanking = buildOverallRanking(activities, participants).slice(0, 5);
   const weekRanking = [...week].sort((a, b) => b.activities - a.activities || a.participant.localeCompare(b.participant)).slice(0, 5);
+  const zeroAlcoholRanking = buildZeroAlcoholRanking(alcoholRecords, participants).slice(0, 10);
   const pending = week.filter((item) => item.activities < weeklyGoal);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAlcohol() {
+      try {
+        const response = await fetch("/api/alcohol", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as { records: AlcoholRecord[] };
+        if (active) {
+          setAlcoholRecords(payload.records ?? []);
+        }
+      } catch {
+        if (active) {
+          setAlcoholRecords([]);
+        }
+      }
+    }
+
+    loadAlcohol();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -61,6 +92,11 @@ export function PublicD185Page() {
           )}
         </div>
       </section>
+
+      <RankingPanel
+        title="Zero Alcool Geral (dias Zero direto)"
+        rows={zeroAlcoholRanking.map((item) => ({ participant: item.participant, value: item.currentStreak, suffix: "dias" }))}
+      />
     </div>
   );
 }

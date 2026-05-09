@@ -20,6 +20,7 @@ type AlcoholRow = {
   participant: string;
   week_key: string;
   status: AlcoholRecord["status"];
+  updated_at?: string;
 };
 
 type ChatMessageRow = {
@@ -92,7 +93,8 @@ export function alcoholRowToRecord(row: AlcoholRow): AlcoholRecord {
   return {
     participant: row.participant,
     weekKey: row.week_key,
-    status: row.status
+    status: row.status,
+    updatedAt: row.updated_at
   };
 }
 

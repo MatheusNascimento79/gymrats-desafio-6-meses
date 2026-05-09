@@ -53,6 +53,7 @@ export type AlcoholRecord = {
   participant: string;
   weekKey: string;
   status: AlcoholStatus;
+  updatedAt?: string;
 };
 
 export type ChatMessage = {

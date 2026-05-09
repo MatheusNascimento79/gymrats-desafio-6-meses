@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const weekKey = request.nextUrl.searchParams.get("weekKey");
   const user = await getCurrentUser();
   const supabase = getSupabaseAdmin()!;
-  let query = supabase.from("alcohol_records").select("participant, week_key, status").order("week_key", { ascending: true });
+  let query = supabase.from("alcohol_records").select("participant, week_key, status, updated_at").order("week_key", { ascending: true });
 
   if (weekKey) {
     query = query.eq("week_key", weekKey);
