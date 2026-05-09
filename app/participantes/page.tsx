@@ -92,15 +92,20 @@ export default function ParticipantsPage() {
                 {week ? <StatusBadge status={week.status} /> : null}
               </div>
 
-              <div className="mt-4 grid gap-2 text-center min-[380px]:grid-cols-2">
-                <Mini label="Na semana" value={weeklyActivities} />
-                <Mini label="No total" value={rank?.totalActivities ?? 0} />
+              <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.025] p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Exercicios</p>
+                <div className="mt-2 grid gap-2 text-center min-[380px]:grid-cols-2">
+                  <Mini label="Na semana" value={weeklyActivities} />
+                  <Mini label="No total" value={rank?.totalActivities ?? 0} />
+                </div>
               </div>
 
-              <div className="mt-2 grid gap-2 text-center min-[380px]:grid-cols-3">
-                <Mini label="Exercicios" value={rank?.streak ?? 0} helper="sem." />
-                <Mini label="Zero atual" value={zeroRank?.currentStreak ?? 0} helper="dias" />
-                <Mini label="Melhor zero" value={zeroRank?.bestStreak ?? 0} helper="dias" />
+              <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.025] p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Zero Alcool</p>
+                <div className="mt-2 grid gap-2 text-center min-[380px]:grid-cols-2">
+                  <Mini label="Dias corridos" value={zeroRank?.currentStreak ?? 0} helper="dias" />
+                  <Mini label="Melhor Streak" value={zeroRank?.bestStreak ?? 0} helper="dias" />
+                </div>
               </div>
 
               <div className="mt-4">
