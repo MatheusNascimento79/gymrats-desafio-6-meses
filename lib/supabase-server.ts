@@ -56,6 +56,14 @@ export function getSupabaseAdmin() {
   return createClient(url, serviceKey, {
     auth: {
       persistSession: false
+    },
+    global: {
+      fetch: (input, init) =>
+        fetch(input, {
+          ...init,
+          cache: "no-store",
+          next: { revalidate: 0 }
+        } as RequestInit & { next?: { revalidate: number } })
     }
   });
 }
