@@ -37,10 +37,11 @@ async function parseCsv(file: File) {
 
 export default function ImportPage() {
   const { user } = useAuth();
-  const { setActivities, reload } = useChallengeData();
+  const { activities, latestActivityDate, setActivities, reload } = useChallengeData();
   const [mode, setMode] = useState<ImportMode>("replace");
   const [files, setFiles] = useState<ParsedGymRatsFiles>({ members: [], checkIns: [], detected: [] });
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -56,6 +57,7 @@ export default function ImportPage() {
 
   async function handleFiles(fileList?: FileList | null) {
     setError("");
+    setWarning("");
     setMessage("");
 
     if (!fileList?.length) {
@@ -84,6 +86,7 @@ export default function ImportPage() {
 
   async function importGymRats() {
     setError("");
+    setWarning("");
     setMessage("");
 
     if (!files.members.length || !files.checkIns.length) {
@@ -118,16 +121,31 @@ export default function ImportPage() {
       }
 
       const mapped = mapCheckInsToActivities(files.members, files.checkIns);
-      const activitiesResponse = await fetch("/api/activities", { cache: "no-store" });
+      const activitiesResponse = await fetch(`/api/activities?verify=${Date.now()}`, { cache: "no-store" });
+      let publicReadTotal = 0;
+      let publicReadLatest: string | null = null;
 
       if (activitiesResponse.ok) {
         const activitiesPayload = (await activitiesResponse.json()) as ActivitiesResponse;
+        publicReadTotal = activitiesPayload.records?.length ?? 0;
+        publicReadLatest = activitiesPayload.records?.at(-1)?.date ?? null;
         setActivities(activitiesPayload.records ?? mapped.records);
       } else {
         setActivities(mapped.records);
       }
 
       await reload();
+
+      if (publicReadTotal !== (payload.totalAfter ?? publicReadTotal) || publicReadLatest !== (payload.latestActivityDate ?? publicReadLatest)) {
+        setWarning(
+          [
+            "Atencao: a importacao gravou os dados, mas a leitura publica usada pelo Dashboard ainda retornou outro estado.",
+            `Importacao: ${payload.totalAfter} atividades ate ${payload.latestActivityDate ?? "sem data"}.`,
+            `Dashboard leu: ${publicReadTotal} atividades ate ${publicReadLatest ?? "sem data"}.`,
+            "Confira se voce esta importando no mesmo dominio publicado da Vercel."
+          ].join(" ")
+        );
+      }
 
       setMessage(
         [
@@ -139,7 +157,8 @@ export default function ImportPage() {
           `${payload.updated ?? 0} atualizadas.`,
           `${payload.duplicates} duplicadas/ignoradas.`,
           `Total no servidor: ${payload.totalAfter}.`,
-          payload.latestActivityDate ? `Ultima atividade: ${payload.latestActivityDate}.` : "Sem atividade final."
+          payload.latestActivityDate ? `Ultima atividade: ${payload.latestActivityDate}.` : "Sem atividade final.",
+          `Leitura do Dashboard agora: ${publicReadTotal} atividades${publicReadLatest ? ` ate ${publicReadLatest}` : ""}.`
         ].join(" ")
       );
     } catch (err) {
@@ -228,6 +247,13 @@ export default function ImportPage() {
             </div>
           ) : null}
 
+          {warning ? (
+            <div className="mt-4 flex gap-2 rounded-lg border border-gold/35 bg-gold/10 p-3 text-sm font-semibold text-gold">
+              <ShieldAlert size={18} />
+              {warning}
+            </div>
+          ) : null}
+
           {message ? (
             <div className="mt-4 flex gap-2 rounded-lg border border-victory/30 bg-victory/10 p-3 text-sm text-victory">
               <CheckCircle2 size={18} />
@@ -258,6 +284,13 @@ export default function ImportPage() {
 
         <div className="panel p-5">
           <h2 className="font-[var(--font-oswald)] text-2xl font-bold uppercase text-white">Arquivos detectados</h2>
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm text-zinc-300">
+            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Estado lido pelo Dashboard</p>
+            <p className="mt-1">
+              <b className="text-gold">{activities.length}</b> atividades
+              {latestActivityDate ? <> ate <b className="text-gold">{latestActivityDate}</b></> : null}
+            </p>
+          </div>
           <div className="mt-4 grid gap-3">
             <FileStatus label="members.csv" count={files.members.length} required />
             <FileStatus label="check_ins.csv" count={files.checkIns.length} required />
