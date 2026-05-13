@@ -37,28 +37,26 @@ export function useChallengeData() {
     try {
       const response = await fetch(`/api/activities?ts=${cacheBust}`, { cache: "no-store" });
 
-      if (response.ok) {
-        const payload = (await response.json()) as ActivitiesResponse;
+      const payload = (await response.json()) as ActivitiesResponse;
 
-        if (payload.configured) {
-          const participantsResponse = await fetch(`/api/participants?ts=${cacheBust}`, { cache: "no-store" });
-          const participantsPayload = (await participantsResponse.json()) as ParticipantsResponse;
+      if (payload.configured) {
+        const participantsResponse = await fetch(`/api/participants?ts=${cacheBust}`, { cache: "no-store" });
+        const participantsPayload = (await participantsResponse.json()) as ParticipantsResponse;
 
-          setActivitiesState(payload.records ?? []);
-          setLatestActivityDate(payload.latestActivityDate ?? payload.records?.at(-1)?.date ?? null);
-          setParticipants(
-            (participantsPayload.participants ?? []).map((participant) => ({
-              name: participant.fullName,
-              gymratsId: participant.gymratsId,
-              role: participant.role,
-              profilePictureUrl: participant.profilePictureUrl
-            }))
-          );
-          setUsingCentralData(true);
-          setUsingMock(false);
-          setDataError(payload.error ?? "");
-          return;
-        }
+        setActivitiesState(payload.records ?? []);
+        setLatestActivityDate(payload.latestActivityDate ?? payload.records?.at(-1)?.date ?? null);
+        setParticipants(
+          (participantsPayload.participants ?? []).map((participant) => ({
+            name: participant.fullName,
+            gymratsId: participant.gymratsId,
+            role: participant.role,
+            profilePictureUrl: participant.profilePictureUrl
+          }))
+        );
+        setUsingCentralData(true);
+        setUsingMock(false);
+        setDataError(payload.error ?? (!response.ok ? "API central indisponivel." : ""));
+        return;
       }
     } catch {
       // Fall back to local demo mode when the API is unavailable in development.
