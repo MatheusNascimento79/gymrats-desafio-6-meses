@@ -47,23 +47,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Erro ao salvar participantes: ${memberError.message}` }, { status: 500 });
   }
 
+  let removed = 0;
+
   if (body.mode === "replace") {
-    const { data: existingActivities, error: listError } = await supabase.from("activities").select("id");
+    const { count: existingCount, error: countError } = await supabase.from("activities").select("id", { count: "exact", head: true });
 
-    if (listError) {
-      return NextResponse.json({ error: `Erro ao listar atividades antigas: ${listError.message}` }, { status: 500 });
+    if (countError) {
+      return NextResponse.json({ error: `Erro ao contar atividades antigas: ${countError.message}` }, { status: 500 });
     }
 
-    const existingIds = (existingActivities ?? []).map((activity) => activity.id);
+    const { error: deleteError } = await supabase.from("activities").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
-    for (let index = 0; index < existingIds.length; index += 500) {
-      const chunk = existingIds.slice(index, index + 500);
-      const { error: deleteError } = await supabase.from("activities").delete().in("id", chunk);
-
-      if (deleteError) {
-        return NextResponse.json({ error: `Erro ao limpar atividades antigas: ${deleteError.message}` }, { status: 500 });
-      }
+    if (deleteError) {
+      return NextResponse.json({ error: `Erro ao limpar atividades antigas: ${deleteError.message}` }, { status: 500 });
     }
+
+    removed = existingCount ?? 0;
   }
 
   const mapped = mapCheckInsToActivities(members, checkIns);
@@ -77,6 +76,7 @@ export async function POST(request: NextRequest) {
   });
 
   let saved = 0;
+  let updated = 0;
   let duplicates = mapped.skipped;
 
   if (rows.length) {
@@ -103,23 +103,40 @@ export async function POST(request: NextRequest) {
 
     const newRows = rows.filter((row) => !row.gymrats_check_in_id || !existingCheckInIds.has(row.gymrats_check_in_id));
     duplicates += rows.length - newRows.length;
+    updated = rows.length - newRows.length;
 
-    for (let index = 0; index < newRows.length; index += 500) {
-      const chunk = newRows.slice(index, index + 500);
-      const { data, error } = await supabase.from("activities").insert(chunk).select("id");
+    for (let index = 0; index < rows.length; index += 500) {
+      const chunk = rows.slice(index, index + 500);
+      const { data, error } = await supabase.from("activities").upsert(chunk, { onConflict: "dedup_key" }).select("id");
 
       if (error) {
-        return NextResponse.json({ error: `Erro ao inserir atividades: ${error.message}` }, { status: 500 });
+        return NextResponse.json({ error: `Erro ao salvar atividades: ${error.message}` }, { status: 500 });
       }
 
       saved += data?.length ?? 0;
     }
   }
 
+  const { count: totalAfter, error: totalError } = await supabase.from("activities").select("id", { count: "exact", head: true });
+
+  if (totalError) {
+    return NextResponse.json({ error: `Erro ao contar atividades finais: ${totalError.message}` }, { status: 500 });
+  }
+
+  const { data: latestRows, error: latestError } = await supabase
+    .from("activities")
+    .select("activity_date")
+    .order("activity_date", { ascending: false })
+    .limit(1);
+
+  if (latestError) {
+    return NextResponse.json({ error: `Erro ao verificar ultima atividade: ${latestError.message}` }, { status: 500 });
+  }
+
   await supabase.from("import_batches").insert({
     mode: body.mode ?? "replace",
     received_records: checkIns.length,
-    saved_records: saved,
+    saved_records: body.mode === "merge" ? rows.length - updated : saved,
     duplicate_records: duplicates
   });
 
@@ -127,7 +144,12 @@ export async function POST(request: NextRequest) {
     ok: true,
     participants: memberRows.length,
     received: checkIns.length,
-    saved,
-    duplicates
+    mapped: rows.length,
+    removed,
+    saved: body.mode === "merge" ? rows.length - updated : saved,
+    updated,
+    duplicates,
+    totalAfter: totalAfter ?? 0,
+    latestActivityDate: latestRows?.[0]?.activity_date ?? null
   });
 }

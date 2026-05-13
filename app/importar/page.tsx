@@ -100,7 +100,18 @@ export default function ImportPage() {
         body: JSON.stringify({ mode, members: files.members, checkIns: files.checkIns })
       });
 
-      const payload = (await response.json()) as { error?: string; participants?: number; saved?: number; duplicates?: number };
+      const payload = (await response.json()) as {
+        error?: string;
+        participants?: number;
+        received?: number;
+        mapped?: number;
+        removed?: number;
+        saved?: number;
+        updated?: number;
+        duplicates?: number;
+        totalAfter?: number;
+        latestActivityDate?: string | null;
+      };
 
       if (!response.ok) {
         throw new Error(payload.error ?? "Erro ao importar arquivos GymRats.");
@@ -116,7 +127,19 @@ export default function ImportPage() {
         setActivities(mapped.records);
       }
 
-      setMessage(`${payload.participants} participantes importados. ${payload.saved} atividades salvas. ${payload.duplicates} duplicadas/ignoradas. Dados recarregados do servidor.`);
+      setMessage(
+        [
+          `${payload.participants} participantes importados.`,
+          `${payload.received} check-ins recebidos.`,
+          `${payload.mapped} atividades validas.`,
+          `${payload.removed ?? 0} antigas removidas.`,
+          `${payload.saved} novas salvas.`,
+          `${payload.updated ?? 0} atualizadas.`,
+          `${payload.duplicates} duplicadas/ignoradas.`,
+          `Total no servidor: ${payload.totalAfter}.`,
+          payload.latestActivityDate ? `Ultima atividade: ${payload.latestActivityDate}.` : "Sem atividade final."
+        ].join(" ")
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao importar arquivos GymRats.");
     } finally {
