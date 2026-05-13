@@ -15,6 +15,11 @@ type ParsedGymRatsFiles = {
   detected: string[];
 };
 
+type ActivitiesResponse = {
+  configured: boolean;
+  records: ReturnType<typeof mapCheckInsToActivities>["records"];
+};
+
 async function parseCsv(file: File) {
   const text = await file.text();
   const parsed = Papa.parse<Record<string, string>>(text, {
@@ -102,8 +107,16 @@ export default function ImportPage() {
       }
 
       const mapped = mapCheckInsToActivities(files.members, files.checkIns);
-      setActivities(mapped.records);
-      setMessage(`${payload.participants} participantes importados. ${payload.saved} atividades salvas. ${payload.duplicates} duplicadas/ignoradas.`);
+      const activitiesResponse = await fetch("/api/activities", { cache: "no-store" });
+
+      if (activitiesResponse.ok) {
+        const activitiesPayload = (await activitiesResponse.json()) as ActivitiesResponse;
+        setActivities(activitiesPayload.records ?? mapped.records);
+      } else {
+        setActivities(mapped.records);
+      }
+
+      setMessage(`${payload.participants} participantes importados. ${payload.saved} atividades salvas. ${payload.duplicates} duplicadas/ignoradas. Dados recarregados do servidor.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao importar arquivos GymRats.");
     } finally {
@@ -152,7 +165,16 @@ export default function ImportPage() {
             <UploadCloud className="text-gold" size={42} />
             <span className="mt-4 font-[var(--font-oswald)] text-xl font-bold uppercase text-white sm:text-2xl">Selecionar arquivos</span>
             <span className="mt-2 text-sm text-zinc-400">Obrigatorios: members.csv e check_ins.csv</span>
-            <input className="hidden" type="file" accept=".csv" multiple onChange={(event) => handleFiles(event.target.files)} />
+            <input
+              className="hidden"
+              type="file"
+              accept=".csv"
+              multiple
+              onClick={(event) => {
+                event.currentTarget.value = "";
+              }}
+              onChange={(event) => handleFiles(event.target.files)}
+            />
           </label>
 
           <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3">
