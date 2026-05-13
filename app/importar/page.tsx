@@ -37,7 +37,7 @@ async function parseCsv(file: File) {
 
 export default function ImportPage() {
   const { user } = useAuth();
-  const { setActivities } = useChallengeData();
+  const { setActivities, reload } = useChallengeData();
   const [mode, setMode] = useState<ImportMode>("replace");
   const [files, setFiles] = useState<ParsedGymRatsFiles>({ members: [], checkIns: [], detected: [] });
   const [error, setError] = useState("");
@@ -126,6 +126,8 @@ export default function ImportPage() {
       } else {
         setActivities(mapped.records);
       }
+
+      await reload();
 
       setMessage(
         [

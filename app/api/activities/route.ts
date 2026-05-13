@@ -5,7 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ configured: false, records: [] });
+    return NextResponse.json(
+      { configured: false, records: [], recordCount: 0, latestActivityDate: null },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   }
 
   const supabase = getSupabaseAdmin();
@@ -16,8 +19,22 @@ export async function GET() {
     .order("participant", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ configured: true, error: error.message, records: [] }, { status: 500 });
+    return NextResponse.json(
+      { configured: true, error: error.message, records: [], recordCount: 0, latestActivityDate: null },
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   }
 
-  return NextResponse.json({ configured: true, records: data.map(activityRowToRecord) });
+  const records = data.map(activityRowToRecord);
+  const latestActivityDate = records.at(-1)?.date ?? null;
+
+  return NextResponse.json(
+    {
+      configured: true,
+      records,
+      recordCount: records.length,
+      latestActivityDate
+    },
+    { headers: { "Cache-Control": "no-store, max-age=0" } }
+  );
 }

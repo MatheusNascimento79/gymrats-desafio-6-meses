@@ -21,7 +21,7 @@ import { ChartCard, CompletionChart, ParticipantBarChart, WeeklyEvolutionChart }
 import type { AlcoholRecord, AlcoholStatus } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { activities, participants: importedParticipants, loaded, usingMock } = useChallengeData();
+  const { activities, participants: importedParticipants, loaded, usingMock, latestActivityDate, dataError } = useChallengeData();
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
   const currentWeekKey = weekKeyFromDate(new Date());
   const currentWeek = summarizeWeek(activities, participants, currentWeekKey);
@@ -45,6 +45,7 @@ export default function DashboardPage() {
       alcoholCompletionRate: participants.length ? Math.round((ok / participants.length) * 100) : 0
     };
   });
+  const currentWeekHasNoLoadedActivity = Boolean(latestActivityDate && latestActivityDate < currentWeekKey);
 
   useEffect(() => {
     let active = true;
@@ -105,6 +106,17 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {dataError ? (
+        <FreshnessNotice tone="danger" text={`Nao foi possivel carregar os dados centrais: ${dataError}`} />
+      ) : currentWeekHasNoLoadedActivity ? (
+        <FreshnessNotice
+          tone="warning"
+          text={`Ultima atividade carregada: ${formatDate(latestActivityDate!)}. A semana atual comecou em ${formatDate(currentWeekKey)}, entao os indicadores semanais ficam zerados ate entrar um check-in desta semana.`}
+        />
+      ) : latestActivityDate ? (
+        <FreshnessNotice tone="neutral" text={`Dados carregados ate ${formatDate(latestActivityDate)}.`} />
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Atletas em dia" value={completed} helper={`${participants.length} participantes ativos`} icon={Target} tone="green" />
@@ -192,6 +204,22 @@ export default function DashboardPage() {
       </section>
     </div>
   );
+}
+
+function formatDate(dateKey: string) {
+  const [year, month, day] = dateKey.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function FreshnessNotice({ text, tone }: { text: string; tone: "neutral" | "warning" | "danger" }) {
+  const classes =
+    tone === "danger"
+      ? "border-danger/30 bg-danger/10 text-danger"
+      : tone === "warning"
+        ? "border-gold/35 bg-gold/10 text-gold"
+        : "border-white/10 bg-white/[0.03] text-zinc-300";
+
+  return <p className={`rounded-lg border p-4 text-sm font-semibold ${classes}`}>{text}</p>;
 }
 
 const alcoholLabels: Record<AlcoholStatus, string> = {

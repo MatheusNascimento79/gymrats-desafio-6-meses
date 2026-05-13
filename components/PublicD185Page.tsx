@@ -7,16 +7,18 @@ import { useChallengeData } from "@/components/useChallengeData";
 import type { AlcoholRecord } from "@/lib/types";
 
 export function PublicD185Page() {
-  const { activities, participants: importedParticipants } = useChallengeData();
+  const { activities, participants: importedParticipants, loaded, latestActivityDate, dataError } = useChallengeData();
   const [alcoholRecords, setAlcoholRecords] = useState<AlcoholRecord[]>([]);
   const participants = importedParticipants.length ? importedParticipants : getParticipants(activities);
-  const week = summarizeWeek(activities, participants, weekKeyFromDate(new Date()));
+  const currentWeekKey = weekKeyFromDate(new Date());
+  const week = summarizeWeek(activities, participants, currentWeekKey);
   const completed = week.filter((item) => item.activities >= weeklyGoal).length;
   const rate = participants.length ? Math.round((completed / participants.length) * 100) : 0;
   const overallRanking = buildOverallRanking(activities, participants).slice(0, 5);
   const weekRanking = [...week].sort((a, b) => b.activities - a.activities || a.participant.localeCompare(b.participant)).slice(0, 5);
   const zeroAlcoholRanking = buildZeroAlcoholRanking(alcoholRecords, participants).slice(0, 10);
   const pending = week.filter((item) => item.activities < weeklyGoal);
+  const currentWeekHasNoLoadedActivity = Boolean(latestActivityDate && latestActivityDate < currentWeekKey);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +47,10 @@ export function PublicD185Page() {
     };
   }, []);
 
+  if (!loaded) {
+    return <div className="panel p-6 text-zinc-300">Carregando placar D185...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <section className="min-h-[440px] overflow-hidden rounded-lg border border-gold/30 bg-[linear-gradient(145deg,rgba(245,197,66,0.24),rgba(8,9,11,0.86)_42%,rgba(8,9,11,1)),url('https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=1800&q=80')] bg-cover bg-center p-5 sm:min-h-[520px] md:p-10">
@@ -64,6 +70,17 @@ export function PublicD185Page() {
           </div>
         </div>
       </section>
+
+      {dataError ? (
+        <FreshnessNotice tone="danger" text={`Nao foi possivel carregar os dados centrais: ${dataError}`} />
+      ) : currentWeekHasNoLoadedActivity ? (
+        <FreshnessNotice
+          tone="warning"
+          text={`Ultima atividade carregada: ${formatDate(latestActivityDate!)}. A semana atual comecou em ${formatDate(currentWeekKey)}, entao os indicadores semanais ficam zerados ate entrar um check-in desta semana.`}
+        />
+      ) : latestActivityDate ? (
+        <FreshnessNotice tone="neutral" text={`Dados carregados ate ${formatDate(latestActivityDate)}.`} />
+      ) : null}
 
       <RankingPanel
         title="Top 5 da semana"
@@ -99,6 +116,22 @@ export function PublicD185Page() {
       />
     </div>
   );
+}
+
+function formatDate(dateKey: string) {
+  const [year, month, day] = dateKey.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function FreshnessNotice({ text, tone }: { text: string; tone: "neutral" | "warning" | "danger" }) {
+  const classes =
+    tone === "danger"
+      ? "border-danger/30 bg-danger/10 text-danger"
+      : tone === "warning"
+        ? "border-gold/35 bg-gold/10 text-gold"
+        : "border-white/10 bg-white/[0.03] text-zinc-300";
+
+  return <p className={`rounded-lg border p-4 text-sm font-semibold ${classes}`}>{text}</p>;
 }
 
 function RankingPanel({ title, rows }: { title: string; rows: Array<{ participant: string; value: number; suffix: string }> }) {
